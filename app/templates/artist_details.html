@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="artist-profile-container">
+    
+    <div class="profile-header">
+        <div class="profile-visual">
+             <img src="/artist_image/{{ artist.name }}" 
+                  alt="{{ artist.name }}" 
+                  class="profile-img"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+             <div class="profile-avatar-fallback" style="display: none;">
+                {{ artist.name[0] | upper }}
+             </div>
+        </div>
+        <div class="profile-info">
+            <span class="label">Artista</span>
+            <h1 class="profile-name">{{ artist.name }}</h1>
+            <p class="profile-meta">{{ artist.genre or 'Música' }} • {{ albums|length }} Álbuns na coleção</p>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <h2 class="section-title">Discografia</h2>
+    
+    {% if albums %}
+    <div class="albums-grid">
+        {% for album in albums %}
+        <a href="/album/{{ album.id }}" class="album-card status-{{ album.visual_status }}">
+            <div class="album-icon">
+                ♪
+            </div>
+            
+            <div class="album-info">
+                <h3 class="album-title">{{ album.title }}</h3>
+                <div class="album-meta">
+                    {% if album.visual_status == 'completed' %}
+                        <span class="badge success">Completo</span>
+                    {% else %}
+                        <span class="badge warning">{{ album.downloaded_tracks }}/{{ album.total_tracks }} Faixas</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>Nenhum álbum encontrado para este artista.</p>
+    </div>
+    {% endif %}
+
+</div>
+
+<style>
+    .artist-profile-container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+
+    /* Header */
+    .profile-header { display: flex; align-items: flex-end; gap: 30px; margin-bottom: 30px; }
+    .profile-img { width: 180px; height: 180px; border-radius: 50%; object-fit: cover; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .profile-avatar-fallback { width: 180px; height: 180px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-weight: bold; color: #555; }
+    
+    .profile-info .label { text-transform: uppercase; font-size: 0.8rem; font-weight: bold; letter-spacing: 1px; color: #aaa; }
+    .profile-name { font-size: 4rem; margin: 5px 0 10px 0; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+    .profile-meta { color: #ccc; font-size: 1rem; }
+
+    .divider { border: 0; border-top: 1px solid #333; margin: 30px 0; }
+    .section-title { font-size: 1.5rem; margin-bottom: 20px; }
+
+    /* Grid */
+    .albums-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+    
+    .album-card { background: #181818; padding: 20px; border-radius: 8px; text-decoration: none; color: white; transition: 0.3s; display: flex; flex-direction: column; gap: 15px; border: 1px solid transparent; }
+    .album-card:hover { background: #282828; transform: translateY(-5px); border-color: #333; }
+
+    .album-icon { width: 100%; aspect-ratio: 1/1; background: #222; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #444; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    .status-completed .album-icon { color: #1db954; }
+    .status-error .album-icon { color: #e74c3c; border: 1px solid #e74c3c; }
+
+    .album-title { font-size: 1rem; margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    
+    .badge { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+    .badge.success { color: #1db954; border: 1px solid #1db954; }
+    .badge.warning { color: #f1c40f; border: 1px solid #f1c40f; }
+
+    .empty-state { text-align: center; padding: 50px; color: #666; }
+</style>
+{% endblock %}

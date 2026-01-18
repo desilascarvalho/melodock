@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    /* HEADER E FILTROS */
+    .page-header {
+        display: flex; justify-content: space-between; align-items: flex-end;
+        margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #222;
+        flex-wrap: wrap; gap: 20px;
+    }
+    
+    .page-title h1 { margin: 0; font-size: 2.2rem; letter-spacing: -1px; }
+    .page-title p { color: #666; margin: 5px 0 0 0; font-size: 0.9rem; }
+
+    /* Controles */
+    .controls-wrapper { display: flex; align-items: center; gap: 20px; }
+
+    .filter-group {
+        display: flex; background: #1a1a1a; padding: 4px;
+        border-radius: 50px; border: 1px solid #333;
+    }
+
+    .btn-filter {
+        padding: 8px 16px; border-radius: 50px; text-decoration: none;
+        font-size: 0.85rem; font-weight: 600; color: #888;
+        transition: 0.2s; display: flex; align-items: center; gap: 5px;
+    }
+    .btn-filter:hover { color: white; }
+    .btn-filter.active { background: #333; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .arrow { font-size: 0.7rem; margin-left: 2px; }
+
+    .actions { display: flex; gap: 10px; }
+    .btn-action {
+        background: #222; color: white; border: none; padding: 10px 20px;
+        border-radius: 50px; text-decoration: none; font-weight: 600;
+        font-size: 0.9rem; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-action:hover { background: #333; }
+    .btn-primary { background: #1db954; color: black; }
+    .btn-primary:hover { background: #1ed760; transform: scale(1.05); }
+
+    /* GRID */
+    .artist-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 15px;
+    }
+
+    /* CARD (Alterado para DIV) */
+    .artist-card {
+        aspect-ratio: 1 / 1;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 15px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        background-color: #1a1a1a;
+    }
+
+    .artist-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        z-index: 2;
+    }
+
+    /* LINK INVISÍVEL (Cobre o card para navegação) */
+    .card-link-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 5;
+    }
+
+    /* BOTÃO DE EXCLUIR (CSS Faltante) */
+    .delete-form {
+        position: absolute; top: 10px; right: 10px; z-index: 20;
+        opacity: 0; transition: opacity 0.2s;
+    }
+    .artist-card:hover .delete-form { opacity: 1; }
+
+    .btn-delete-mini {
+        width: 28px; height: 28px;
+        border-radius: 50%; border: none;
+        background: rgba(0,0,0,0.5); color: white;
+        font-weight: bold; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        backdrop-filter: blur(4px);
+        font-size: 14px;
+        transition: 0.2s;
+    }
+    .btn-delete-mini:hover { background: #ff5252; transform: scale(1.1); }
+
+    /* Marca d'água */
+    .watermark {
+        position: absolute; top: -15px; right: -10px;
+        font-size: 5rem; font-weight: 900; opacity: 0.15; color: white;
+        pointer-events: none; line-height: 1;
+    }
+
+    .artist-name {
+        font-size: 1rem; font-weight: 700; color: white; margin: 0;
+        z-index: 10; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        line-height: 1.2; word-wrap: break-word; pointer-events: none;
+    }
+
+    .artist-genre {
+        font-size: 0.7rem; color: rgba(255,255,255,0.7);
+        margin-top: 3px; z-index: 10;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+    }
+
+    /* Paginação */
+    .pagination { display: flex; justify-content: center; gap: 15px; margin-top: 40px; align-items: center; }
+    .page-info { color: #666; font-size: 0.9rem; }
+
+    /* Cores */
+    .grad-0 { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+    .grad-1 { background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 100%); }
+    .grad-2 { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .grad-3 { background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); }
+    .grad-4 { background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); }
+    .grad-5 { background: linear-gradient(135deg, #cb2d3e 0%, #ef473a 100%); }
+    .grad-6 { background: linear-gradient(135deg, #34e89e 0%, #0f3443 100%); }
+    .grad-7 { background: linear-gradient(135deg, #200122 0%, #6f0000 100%); }
+</style>
+
+<div class="page-header">
+    <div class="page-title">
+        <h1>Sua Biblioteca</h1>
+        <p>{{ stats.artists }} Artistas Gerenciados</p>
+    </div>
+
+    <div class="controls-wrapper">
+        <div class="filter-group">
+            <a href="?sort={{ 'date_asc' if current_sort == 'date_desc' else 'date_desc' }}" 
+               class="btn-filter {% if 'date' in current_sort %}active{% endif %}">
+               📅 Recentes 
+               {% if current_sort == 'date_desc' %}<span class="arrow">⬇</span>
+               {% elif current_sort == 'date_asc' %}<span class="arrow">⬆</span>
+               {% endif %}
+            </a>
+
+            <a href="?sort={{ 'name_desc' if current_sort == 'name_asc' else 'name_asc' }}" 
+               class="btn-filter {% if 'name' in current_sort %}active{% endif %}">
+               🔤 Nome
+               {% if current_sort == 'name_asc' %}<span class="arrow">⬇</span>
+               {% elif current_sort == 'name_desc' %}<span class="arrow">⬆</span>
+               {% endif %}
+            </a>
+        </div>
+
+        <div class="actions">
+            <a href="/explorer" class="btn-action">🚀 Explorar</a>
+            <a href="/" class="btn-action btn-primary">➕ Adicionar</a>
+        </div>
+    </div>
+</div>
+
+<div class="artist-grid">
+    {% for artist in artists_list %}
+        <div class="artist-card grad-{{ loop.index0 % 8 }}">
+            
+            <a href="/artist/{{ artist.name }}" class="card-link-overlay"></a>
+
+            <form action="/delete_artist" method="POST" class="delete-form" onsubmit="return confirm('Tem certeza que deseja excluir {{ artist.name }}?');">
+                <input type="hidden" name="artist_name" value="{{ artist.name }}">
+                <button type="submit" class="btn-delete-mini" title="Excluir Artista">✕</button>
+            </form>
+
+            <span class="watermark">{{ artist.name[0] | upper }}</span>
+            <h3 class="artist-name">{{ artist.name }}</h3>
+            <span class="artist-genre">{{ artist.genre or 'Library' }}</span>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="pagination">
+    {% if current_page > 1 %}
+        <a href="?page={{ current_page - 1 }}&sort={{ current_sort }}" class="btn-action">⬅ Anterior</a>
+    {% endif %}
+    
+    <span class="page-info">Página {{ current_page }} de {{ total_pages }}</span>
+    
+    {% if current_page < total_pages %}
+        <a href="?page={{ current_page + 1 }}&sort={{ current_sort }}" class="btn-action">Próxima ➡</a>
+    {% endif %}
+</div>
+
+{% endblock %}

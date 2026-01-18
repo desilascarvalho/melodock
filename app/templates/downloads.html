@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="downloads-container">
+    
+    <div class="downloads-header">
+        <h1>Central de Downloads</h1>
+        <p>Gerencie sua fila e acompanhe o progresso</p>
+    </div>
+
+    {% if active %}
+    <div class="active-download-card">
+        <div class="active-info">
+            <span class="pulse-dot"></span>
+            <div class="text-content">
+                <h3>Baixando Agora</h3>
+                <p class="active-title">{{ active.artist }} - {{ active.title }}</p>
+            </div>
+        </div>
+        <div class="active-action">
+             <button onclick="deleteItem('{{ active.id }}')" class="btn-cancel-active">❌ Cancelar Atual</button>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state-card">
+        <div class="icon">✅</div>
+        <h3>Worker Livre</h3>
+        <p>Nenhum download ativo no momento.</p>
+    </div>
+    {% endif %}
+
+    <div class="actions-bar">
+        <div class="actions-group">
+            <button onclick="manageQueue('reset_stuck')" class="btn-tool blue" title="Use se o download parou e não avança">
+                🔄 Destravar Fila
+            </button>
+        </div>
+        <div class="actions-group right">
+            <button onclick="manageQueue('clear_errors')" class="btn-tool red-outline">
+                🗑️ Limpar Erros
+            </button>
+            <button onclick="manageQueue('clear_pending')" class="btn-tool red-outline">
+                🧹 Limpar Pendentes
+            </button>
+            <button onclick="manageQueue('clear_all')" class="btn-tool red-solid">
+                ☢️ Limpar TUDO
+            </button>
+        </div>
+    </div>
+
+    <div class="queue-list">
+        {% if grouped_queue %}
+            {% for artist, items in grouped_queue.items() %}
+            <div class="artist-group">
+                <div class="group-header">
+                    <h3>{{ artist }}</h3>
+                    {% if not artist_priority.get(artist) %}
+                    <form action="/queue/prioritize/{{ artist }}" method="POST">
+                        <button class="btn-prioritize">⬆️ Priorizar Artista</button>
+                    </form>
+                    {% else %}
+                        <span class="badge high-prio">Alta Prioridade</span>
+                    {% endif %}
+                </div>
+
+                <div class="albums-grid">
+                    {% for item in items %}
+                    <div class="queue-item {{ item.status }}">
+                        <div class="item-cover">
+                            {% if item.cover_url %}
+                                <img src="{{ item.cover_url }}" loading="lazy">
+                            {% else %}
+                                <div class="fallback">💿</div>
+                            {% endif %}
+                        </div>
+                        <div class="item-info">
+                            <span class="badge {{ item.status }}">
+                                {% if item.status == 'error' %}Erro
+                                {% elif item.status == 'high_priority' %}Prioridade
+                                {% else %}Fila{% endif %}
+                            </span>
+                            <a href="/album/{{ item.id }}" class="item-title">{{ item.title }}</a>
+                            {% if item.error_msg %}
+                                <p class="error-msg">{{ item.error_msg }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="item-actions">
+                            <button onclick="deleteItem('{{ item.id }}')" class="btn-delete" title="Remover da Fila">✕</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-queue-message">
+                <p>Sua fila de espera está vazia.</p>
+                <a href="/dashboard" class="btn-cta">Buscar Artistas</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function manageQueue(action) {
+    let msg = "Tem certeza?";
+    if (action === 'clear_all') msg = "Isso vai apagar TODOS os downloads pendentes e erros. Confirmar?";
+    if (action === 'reset_stuck') msg = "Isso vai reiniciar downloads que podem ter travado. Confirmar?";
+    
+    if (!confirm(msg)) return;
+
+    const formData = new FormData();
+    formData.append('action', action);
+
+    fetch('/api/manage_queue', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+        if(data.success) {
+            window.location.reload();
+        } else {
+            alert("Erro: " + data.error);
+        }
+    });
+}
+
+function deleteItem(id) {
+    if(!confirm("Remover este álbum da fila?")) return;
+    fetch(`/queue/delete_item/${id}`, { method: 'POST' })
+    .then(() => window.location.reload());
+}
+</script>
+
+<style>
+    .downloads-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+    
+    /* Header */
+    .downloads-header { text-align: center; margin-bottom: 30px; }
+    .downloads-header h1 { margin-bottom: 5px; font-size: 2rem; }
+    .downloads-header p { color: #888; }
+
+    /* Active Card */
+    .active-download-card { background: linear-gradient(45deg, #1e1e1e, #252525); border: 1px solid #1db954; border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; animation: glow 2s infinite alternate; }
+    @keyframes glow { from { box-shadow: 0 0 10px rgba(29, 185, 84, 0.1); } to { box-shadow: 0 0 20px rgba(29, 185, 84, 0.3); } }
+    
+    .active-info { display: flex; align-items: center; gap: 15px; }
+    .pulse-dot { width: 12px; height: 12px; background: #1db954; border-radius: 50%; animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.7; } 100% { transform: scale(1.2); opacity: 1; } }
+    
+    .active-title { font-weight: bold; color: white; margin: 5px 0 0 0; }
+    
+    /* Empty State */
+    .empty-state-card { background: #1e1e1e; border-radius: 12px; padding: 20px; text-align: center; border: 1px dashed #444; margin-bottom: 30px; }
+    .empty-state-card .icon { font-size: 2rem; margin-bottom: 10px; }
+
+    /* Actions Bar */
+    .actions-bar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 30px; padding: 15px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
+    .actions-group { display: flex; gap: 10px; }
+    
+    .btn-tool { padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; border: none; }
+    .btn-tool.blue { background: #2979ff; color: white; }
+    .btn-tool.blue:hover { background: #2264d1; }
+    
+    .btn-tool.red-outline { background: transparent; border: 1px solid #ff5252; color: #ff5252; }
+    .btn-tool.red-outline:hover { background: rgba(255, 82, 82, 0.1); }
+    
+    .btn-tool.red-solid { background: #ff5252; color: white; }
+    .btn-tool.red-solid:hover { background: #d32f2f; }
+
+    /* Queue List */
+    .artist-group { margin-bottom: 30px; }
+    .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+    .btn-prioritize { background: transparent; border: 1px solid #1db954; color: #1db954; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .btn-prioritize:hover { background: #1db954; color: black; }
+
+    .albums-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+    
+    .queue-item { display: flex; align-items: center; gap: 15px; background: #222; padding: 10px; border-radius: 8px; border: 1px solid #333; position: relative; }
+    .queue-item.error { border-color: #ff5252; background: rgba(255, 82, 82, 0.05); }
+    .queue-item.high_priority { border-color: #f1c40f; }
+    
+    .item-cover { width: 50px; height: 50px; flex-shrink: 0; }
+    .item-cover img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+    .fallback { width: 100%; height: 100%; background: #333; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+    
+    .item-info { flex-grow: 1; overflow: hidden; }
+    .item-title { display: block; color: white; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    .item-title:hover { text-decoration: underline; }
+    
+    .error-msg { color: #ff5252; font-size: 0.8rem; margin: 3px 0 0 0; }
+    
+    .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; font-weight: bold; margin-bottom: 4px; display: inline-block; }
+    .badge.pending { background: #444; color: #ccc; }
+    .badge.error { background: #ff5252; color: white; }
+    .badge.high_priority { background: #f1c40f; color: black; }
+
+    .btn-delete, .btn-cancel-active { background: transparent; border: none; color: #666; font-size: 1.2rem; cursor: pointer; padding: 5px; }
+    .btn-delete:hover { color: #ff5252; }
+    .btn-cancel-active { border: 1px solid #ff5252; border-radius: 4px; color: #ff5252; font-size: 0.8rem; padding: 5px 10px; }
+    .btn-cancel-active:hover { background: #ff5252; color: white; }
+
+    .empty-queue-message { text-align: center; padding: 40px; color: #666; }
+    .btn-cta { background: #1db954; color: black; padding: 10px 20px; border-radius: 20px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 10px; }
+</style>
+{% endblock %}

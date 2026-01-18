@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h1>Logs do Sistema</h1>
+    <span style="color: #1db954; font-size: 0.9rem;">● Atualização em Tempo Real</span>
+</div>
+
+<div id="terminal" style="background: #000; padding: 20px; border-radius: 8px; border: 1px solid #333; height: 70vh; overflow-y: auto; font-family: monospace; font-size: 0.9rem;">
+    Carregando...
+</div>
+
+<script>
+    const term = document.getElementById('terminal');
+    
+    function fetchLogs() {
+        fetch('/api/logs_data')
+            .then(r => r.json())
+            .then(logs => {
+                let html = '';
+                logs.forEach(l => {
+                    let color = '#ccc';
+                    if(l.tag === 'ERROR') color = '#ff5555';
+                    if(l.tag === 'QUEUE') color = '#f1c40f';
+                    if(l.tag === 'DB') color = '#3498db';
+                    if(l.tag === 'CONFIG') color = '#9b59b6';
+                    
+                    html += `<div style="margin-bottom: 4px;">
+                        <span style="color: #555;">[${l.time}]</span> 
+                        <span style="color: ${color}; font-weight: bold; width: 80px; display: inline-block;">${l.tag}</span> 
+                        <span style="color: #eee;">${l.message}</span>
+                    </div>`;
+                });
+                term.innerHTML = html;
+                // Auto scroll se estiver perto do fim
+                // term.scrollTop = term.scrollHeight; 
+            });
+    }
+    
+    setInterval(fetchLogs, 2000);
+    fetchLogs();
+</script>
+{% endblock %}

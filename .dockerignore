@@ -1,0 +1,24 @@
+# Ignorar pastas de sistema e cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ignorar dados pesados
+downloads/
+music/
+config/
+melodock.db
+
+# Ignorar git e docker
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+.dockerignore

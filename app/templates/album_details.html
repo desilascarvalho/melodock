@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="album-details-container">
+    <div class="album-header">
+        <div class="cover-area">
+            {% if album.cover_url %}
+                <img src="{{ album.cover_url }}" class="album-cover-big">
+            {% else %}
+                <div class="album-cover-fallback">🎵</div>
+            {% endif %}
+        </div>
+        
+        <div class="album-info">
+            <span class="type-badge">{{ album.type }}</span>
+            <h1>{{ album.title }}</h1>
+            <h2><a href="/artist/{{ album.artist }}">{{ album.artist }}</a></h2>
+            
+            <div class="meta-stats">
+                <span>{{ progress.completed }} / {{ progress.total }} Faixas</span>
+                <span class="status-pill {{ album.status }}">
+                    {% if album.status == 'completed' %}Concluído
+                    {% elif album.status == 'downloading' %}Baixando...
+                    {% elif album.status == 'pending' %}Na Fila
+                    {% elif album.status == 'error' %}Erro
+                    {% else %}{{ album.status }}{% endif %}
+                </span>
+            </div>
+
+            <div class="album-actions">
+                <form action="/queue/prioritize/{{ album.artist }}" method="POST" style="display:inline;">
+                    <button class="btn-primary">⬇️ Baixar Pendentes</button>
+                </form>
+                
+                <form action="/queue/delete_item/{{ album.id }}" method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza? Isso remove o álbum do banco de dados (arquivos permanecem).');">
+                    <button class="btn-danger">🗑️ Remover do DB</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="tracks-section">
+        <h3>Faixas</h3>
+        <div class="table-responsive">
+            <table class="tracks-table">
+                <thead>
+                    <tr>
+                        <th width="50">#</th>
+                        <th>Título</th>
+                        <th width="150">Status</th>
+                        <th width="150">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for track in tracks %}
+                    <tr class="track-row {{ track.status }}">
+                        <td class="track-num">{{ track.track_number }}</td>
+                        <td class="track-title">
+                            {{ track.title }}
+                            {% if track.manual_url %}
+                                <span class="manual-badge" title="Link manual ativo">🔗</span>
+                            {% endif %}
+                            {% if track.error_msg %}
+                                <div class="error-text">{{ track.error_msg }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if track.status == 'completed' %}
+                                <span class="badge success">Pronto</span>
+                            {% elif track.status == 'downloading' %}
+                                <span class="badge warning">Baixando</span>
+                            {% elif track.status == 'error' %}
+                                <span class="badge error">Erro</span>
+                            {% else %}
+                                <span class="badge neutral">Pendente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button onclick="fixTrack('{{ track.id }}', '{{ track.title|replace("'", "") }}')" class="btn-icon" title="Corrigir Link">
+                                🔧 Corrigir
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function fixTrack(trackId, trackName) {
+    const url = prompt(`Cole o link do Deezer para corrigir:\n"${trackName}"`);
+    
+    if (url && url.trim() !== "") {
+        const formData = new FormData();
+        formData.append('track_id', trackId);
+        formData.append('manual_url', url.trim());
+
+        fetch('/api/fix_track', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Link salvo! O sistema vai tentar baixar novamente em instantes.');
+                location.reload();
+            } else {
+                alert('Erro ao salvar: ' + (data.error || 'Desconhecido'));
+            }
+        })
+        .catch(err => alert('Erro de conexão: ' + err));
+    }
+}
+</script>
+
+<style>
+    .album-details-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+    
+    /* Header Styles */
+    .album-header { display: flex; gap: 30px; margin-bottom: 40px; align-items: flex-end; }
+    
+    .album-cover-big { width: 220px; height: 220px; object-fit: cover; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .album-cover-fallback { width: 220px; height: 220px; background: #333; display: flex; align-items: center; justify-content: center; font-size: 4rem; border-radius: 8px; }
+    
+    .album-info h1 { font-size: 2.5rem; margin: 10px 0; line-height: 1.1; }
+    .album-info h2 a { color: #b3b3b3; text-decoration: none; font-size: 1.2rem; }
+    .album-info h2 a:hover { color: white; text-decoration: underline; }
+    
+    .type-badge { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .meta-stats { margin: 15px 0; display: flex; gap: 15px; align-items: center; color: #888; }
+    .status-pill { padding: 5px 12px; border-radius: 15px; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; }
+    .status-pill.completed { background: #1db954; color: black; }
+    .status-pill.error { background: #ff5252; color: white; }
+    .status-pill.downloading { background: #ff9800; color: black; }
+    
+    .album-actions { margin-top: 20px; display: flex; gap: 10px; }
+    
+    /* Track Table */
+    .tracks-section h3 { border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+    
+    .tracks-table { width: 100%; border-collapse: collapse; }
+    .tracks-table th { text-align: left; padding: 12px; color: #b3b3b3; border-bottom: 1px solid #333; font-size: 0.9rem; text-transform: uppercase; }
+    .tracks-table td { padding: 12px; border-bottom: 1px solid #222; vertical-align: middle; }
+    .tracks-table tr:hover { background: #2a2a2a; }
+    
+    .track-num { color: #666; font-family: monospace; }
+    .track-title { font-weight: 500; }
+    .error-text { color: #ff5252; font-size: 0.8rem; margin-top: 4px; }
+    .manual-badge { font-size: 0.8rem; margin-left: 5px; cursor: help; }
+    
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .badge.success { color: #1db954; }
+    .badge.warning { color: #ff9800; }
+    .badge.error { color: #ff5252; }
+    .badge.neutral { color: #888; }
+    
+    .btn-primary { background: #1db954; color: black; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-primary:hover { transform: scale(1.05); }
+    
+    .btn-danger { background: transparent; border: 1px solid #ff5252; color: #ff5252; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.2s; }
+    .btn-danger:hover { background: #ff5252; color: white; }
+    
+    .btn-icon { background: #333; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .btn-icon:hover { background: #444; }
+
+    @media (max-width: 768px) {
+        .album-header { flex-direction: column; align-items: center; text-align: center; }
+        .album-actions { justify-content: center; }
+    }
+</style>
+{% endblock %}

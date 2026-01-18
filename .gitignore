@@ -1,0 +1,19 @@
+cat <<EOF > .gitignore
+# Ignorar Python cache
+__pycache__/
+*.pyc
+
+# Ignorar Banco de Dados (IMPORTANTE)
+*.db
+*.sqlite3
+melodock.db
+
+# Ignorar Pastas de Mídia e Downloads
+music/
+downloads/
+config/artist_images/
+
+# Ignorar configurações de ambiente e logs
+.env
+logs/
+EOF

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melodock</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #000000;
+            --sidebar-width: 240px;
+            --accent: #1db954;
+            --text-main: #ffffff;
+            --text-muted: #b3b3b3;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR (Barra Lateral) */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #000;
+            border-right: 1px solid #222;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            box-sizing: border-box;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 40px;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand span { color: var(--accent); }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: var(--text-muted);
+            border-radius: 8px;
+            transition: 0.2s;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: #1a1a1a;
+            color: white;
+        }
+        
+        .nav-item.active { border-left: 3px solid var(--accent); }
+
+        .nav-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+
+        .system-info {
+            font-size: 0.75rem;
+            color: #444;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #222;
+        }
+
+        /* CONTEÚDO PRINCIPAL */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            padding: 40px;
+            max-width: 1600px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Responsividade Mobile */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { 
+                position: relative; 
+                width: 100%; 
+                height: auto; 
+                border-right: none; 
+                border-bottom: 1px solid #222; 
+                padding: 15px;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .brand { margin-bottom: 0; font-size: 1.2rem; }
+            .nav-links { flex-direction: row; gap: 5px; flex-grow: 0; }
+            .nav-item { padding: 8px; font-size: 0; } /* Esconde texto no mobile */
+            .nav-item .nav-icon { font-size: 1.2rem; margin: 0; }
+            .system-info { display: none; }
+            .main-content { margin-left: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="brand">
+            Melo<span>dock</span>
+        </div>
+        
+        <div class="nav-links">
+            <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">
+                <span class="nav-icon">🔍</span> Busca
+            </a>
+
+            <a href="/explorer" class="nav-item {% if '/explorer' in request.path %}active{% endif %}">
+                <span class="nav-icon">🚀</span> Explorer
+            </a>
+
+            <a href="/dashboard" class="nav-item {% if '/dashboard' in request.path or '/artist/' in request.path %}active{% endif %}">
+                <span class="nav-icon">📊</span> Biblioteca
+            </a>
+
+            <a href="/downloads" class="nav-item {% if '/downloads' in request.path %}active{% endif %}">
+                <span class="nav-icon">⬇️</span> Downloads
+            </a>
+
+            <a href="/logs" class="nav-item {% if '/logs' in request.path %}active{% endif %}">
+                <span class="nav-icon">📜</span> Logs
+            </a>
+
+            <a href="/settings" class="nav-item {% if '/settings' in request.path %}active{% endif %}">
+                <span class="nav-icon">⚙️</span> Config
+            </a>
+        </div>
+
+        <div class="system-info">
+            {{ system_version }}
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

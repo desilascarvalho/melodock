@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="settings-container">
+
+    <div class="settings-header">
+        <h1>Configurações</h1>
+        <p>Personalize o comportamento do Melodock</p>
+    </div>
+
+    <div class="setting-card full-width">
+        <div class="card-header">
+            <div class="icon-box green">📚</div>
+            <div class="header-text">
+                <h3>Importar Biblioteca Existente</h3>
+                <p>Escaneie a pasta <code>/music</code>, detecte artistas e vincule ao Deezer.</p>
+            </div>
+            <button onclick="startScan()" class="btn-action">🔍 Iniciar Scan</button>
+        </div>
+
+        <div class="card-body" id="scanArea" style="display: none;">
+            <p class="scan-instructions">
+                <strong>Atenção:</strong> Apenas artistas com <span style="color: #1db954;">Status Verde</span> ou com <strong>ID preenchido manualmente</strong> serão importados.
+                <br>Se o status for vermelho, você DEVE colar o ID do Deezer na caixa ou ele será ignorado.
+            </p>
+            
+            <div class="table-responsive">
+                <table class="import-table">
+                    <thead>
+                        <tr>
+                            <th>Pasta (/music)</th>
+                            <th>Detectado no Deezer</th>
+                            <th>Deezer ID (Editável)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scanResultsBody">
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="import-actions">
+                <button onclick="cancelScan()" class="btn-cancel">Cancelar</button>
+                <button onclick="finalizeImport()" class="btn-save">💾 Confirmar e Importar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-grid">
+
+        <div class="setting-card">
+            <div class="card-header">
+                <div class="icon-box orange">🤖</div>
+                <div class="header-text">
+                    <h3>Automação & Inteligência</h3>
+                    <p>Configure a descoberta de artistas e varreduras</p>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <form method="POST" action="/settings" class="settings-form">
+                    
+                    <div class="section-label">🕷️ Spider (Descoberta Automática)</div>
+                    
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="spider_enabled" class="input-select">
+                            <option value="true" {% if spider_enabled == 'true' %}selected{% endif %}>🟢 Ativado</option>
+                            <option value="false" {% if spider_enabled != 'true' %}selected{% endif %}>🔴 Desativado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Horário da Descoberta</label>
+                            <input type="time" name="spider_schedule_time" value="{{ spider_schedule_time }}" class="input-text">
+                        </div>
+                        <div class="form-group half">
+                            <label>Crescimento Diário (%)</label>
+                            <input type="number" name="spider_growth_percent" value="{{ spider_growth }}" step="1" min="1" max="100" class="input-text">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mínimo de Fãs (Qualidade)</label>
+                        <input type="number" name="spider_min_fans" value="{{ spider_min_fans }}" class="input-text">
+                        <span class="input-help">O sistema ignorará artistas com menos fãs que este valor.</span>
+                    </div>
+
+                    <hr class="divider">
+
+                    <div class="section-label">⏰ Varredura de Biblioteca</div>
+                    
+                    <div class="form-group">
+                        <label>Horário da Varredura de Lançamentos</label>
+                        <div class="input-wrapper">
+                            <input type="time" name="scan_time" value="{{ scan_time }}" required class="input-text">
+                        </div>
+                        <span class="input-help">Busca novos álbuns para artistas que você JÁ possui.</span>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-save">
+                            💾 Salvar Configurações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="setting-card">
+            <div class="card-header">
+                <div class="icon-box blue">ℹ️</div>
+                <div class="header-text">
+                    <h3>Sobre o Melodock</h3>
+                    <p>Status do sistema</p>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="info-row">
+                    <span class="info-label">Versão</span>
+                    <span class="info-value">{{ system_version }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Worker</span>
+                    <span class="info-value status-online">● Online</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Banco de Dados</span>
+                    <span class="info-value">SQLite (Local)</span>
+                </div>
+                
+                <div class="links-row">
+                    <a href="#" target="_blank" class="link-btn">GitHub</a>
+                    <a href="/logs" class="link-btn secondary">Ver Logs</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// LÓGICA DE IMPORTAÇÃO (Mantida intacta)
+let scannedData = [];
+
+function startScan() {
+    const btn = document.querySelector('.btn-action');
+    btn.disabled = true;
+    btn.innerText = "Escaneando...";
+    
+    fetch('/api/scan_library_preview')
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                btn.disabled = false;
+                btn.innerText = "🔍 Iniciar Scan";
+                return;
+            }
+            scannedData = data;
+            renderTable(data);
+            document.getElementById('scanArea').style.display = 'block';
+            btn.innerText = "🔄 Re-escanear";
+            btn.disabled = false;
+        })
+        .catch(err => {
+            alert("Erro ao escanear: " + err);
+            btn.disabled = false;
+            btn.innerText = "🔍 Iniciar Scan";
+        });
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('scanResultsBody');
+    tbody.innerHTML = '';
+    
+    data.forEach((item, index) => {
+        let statusHtml = item.status === 'found' 
+            ? '<span class="badge success">Encontrado</span>' 
+            : '<span class="badge error">Sem ID</span>';
+            
+        let imgHtml = item.image 
+            ? `<img src="${item.image}" class="mini-thumb">` 
+            : '<div class="mini-thumb-fallback">?</div>';
+
+        let valId = item.deezer_id || '';
+
+        let row = `
+            <tr>
+                <td class="folder-cell">
+                    <span class="folder-icon">📁</span> ${item.folder}
+                </td>
+                <td class="detected-cell">
+                    ${imgHtml}
+                    <span>${item.detected_name}</span>
+                </td>
+                <td>
+                    <input type="text" class="input-id" 
+                           value="${valId}" 
+                           id="id-${index}" 
+                           placeholder="Cole o ID aqui">
+                </td>
+                <td>${statusHtml}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+function finalizeImport() {
+    const payload = scannedData.map((item, index) => {
+        const inputVal = document.getElementById(`id-${index}`).value;
+        return {
+            folder: item.folder,
+            name: item.detected_name,
+            deezer_id: inputVal
+        };
+    });
+
+    const validCount = payload.filter(x => x.deezer_id).length;
+    const ignoredCount = payload.length - validCount;
+
+    let msg = `Você vai importar ${validCount} artistas.`;
+    if (ignoredCount > 0) {
+        msg += `\n⚠️ ATENÇÃO: ${ignoredCount} pastas serão IGNORADAS pois estão sem ID.`;
+    }
+
+    if(!confirm(msg)) return;
+
+    fetch('/api/import_library', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(res => {
+        if(res.success) {
+            alert(`Sucesso! Importação de ${res.count} artistas iniciada.`);
+            window.location.href = '/logs';
+        }
+    });
+}
+
+function cancelScan() {
+    document.getElementById('scanArea').style.display = 'none';
+}
+</script>
+
+<style>
+    /* VARIÁVEIS DO TEMA */
+    :root {
+        --bg-color: #121212;
+        --card-bg: #1e1e1e;
+        --text-main: #ffffff;
+        --text-muted: #b3b3b3;
+        --accent-green: #1db954;
+        --accent-purple: #bb86fc;
+        --accent-blue: #2979ff;
+        --accent-orange: #ff9800;
+        --border-radius: 12px;
+    }
+
+    .settings-container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+
+    /* HEADER */
+    .settings-header { text-align: center; margin-bottom: 50px; }
+    .settings-header h1 { font-size: 2.2rem; margin-bottom: 10px; font-weight: 700; letter-spacing: -1px; }
+    .settings-header p { color: var(--text-muted); font-size: 1.1rem; }
+
+    /* GRID */
+    .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; margin-top: 30px;}
+    .full-width { grid-column: 1 / -1; }
+
+    /* CARD STYLE */
+    .setting-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        border: 1px solid #333;
+        overflow: hidden;
+        transition: transform 0.2s;
+    }
+    .setting-card:hover { border-color: #444; }
+
+    /* CARD HEADER */
+    .card-header {
+        padding: 25px;
+        background: rgba(255,255,255,0.03);
+        border-bottom: 1px solid #333;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .icon-box { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .icon-box.purple { background: rgba(187, 134, 252, 0.15); color: var(--accent-purple); }
+    .icon-box.blue { background: rgba(41, 121, 255, 0.15); color: var(--accent-blue); }
+    .icon-box.green { background: rgba(29, 185, 84, 0.15); color: var(--accent-green); }
+    .icon-box.orange { background: rgba(255, 152, 0, 0.15); color: var(--accent-orange); }
+
+    .header-text h3 { margin: 0 0 5px 0; font-size: 1.1rem; color: white; }
+    .header-text p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+
+    /* CARD BODY */
+    .card-body { padding: 25px; }
+
+    /* FORM & INPUTS (Atualizado para novos campos) */
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 8px; color: var(--text-main); font-weight: 600; font-size: 0.95rem; }
+    
+    .form-row { display: flex; gap: 15px; }
+    .form-row .half { flex: 1; }
+
+    .input-text, .input-select {
+        width: 100%;
+        padding: 12px;
+        background: #2a2a2a;
+        border: 1px solid #444;
+        border-radius: 8px;
+        color: white;
+        font-size: 1rem;
+        font-family: 'Inter', sans-serif;
+        outline: none;
+        transition: 0.3s;
+        box-sizing: border-box;
+    }
+    
+    .input-text:focus, .input-select:focus { border-color: var(--accent-green); background: #333; }
+    
+    /* Time icon fix */
+    input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+
+    .input-help { display: block; margin-top: 6px; font-size: 0.8rem; color: #666; }
+    
+    .section-label { color: var(--accent-orange); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; font-weight: bold; }
+    .divider { border: 0; border-top: 1px solid #333; margin: 25px 0; }
+
+    .btn-save {
+        width: 100%; padding: 12px; background: var(--accent-green); color: #000;
+        border: none; border-radius: 8px; font-weight: bold; font-size: 1rem;
+        cursor: pointer; transition: 0.2s; margin-top: 10px;
+    }
+    .btn-save:hover { background: #1ed760; transform: translateY(-2px); }
+
+    /* IMPORT TABLE STYLES */
+    .scan-instructions { color: #b3b3b3; margin-bottom: 20px; font-size: 0.9rem; background: #252525; padding: 15px; border-radius: 8px; border-left: 4px solid #1db954; }
+    
+    .import-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .import-table th { text-align: left; padding: 12px; border-bottom: 1px solid #333; color: #888; font-size: 0.85rem; text-transform: uppercase; }
+    .import-table td { padding: 12px; border-bottom: 1px solid #2a2a2a; vertical-align: middle; }
+    
+    .folder-cell { font-family: monospace; color: #fff; }
+    .folder-icon { color: #f1c40f; margin-right: 5px; }
+    
+    .detected-cell { display: flex; align-items: center; gap: 10px; }
+    .mini-thumb { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+    .mini-thumb-fallback { width: 30px; height: 30px; border-radius: 50%; background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; }
+    
+    .input-id { background: #121212; border: 1px solid #444; color: #1db954; padding: 8px; border-radius: 4px; width: 120px; font-family: monospace; text-align: center; color: white;}
+    .input-id:focus { border-color: #1db954; outline: none; }
+    
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+    .badge.success { background: rgba(129, 199, 132, 0.2); color: #81c784; }
+    .badge.error { background: rgba(255, 82, 82, 0.2); color: #ff5252; }
+
+    .btn-action { background: #2a2a2a; color: white; border: 1px solid #444; padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-weight: bold; float: right;}
+    .btn-action:hover:not(:disabled) { background: #333; border-color: white; }
+    .btn-action:disabled { opacity: 0.5; cursor: default; }
+    
+    .import-actions { display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px; }
+    .btn-cancel { background: transparent; border: none; color: #888; cursor: pointer; }
+    .btn-cancel:hover { color: white; }
+
+    /* INFO ROW */
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #2a2a2a; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--text-muted); font-size: 0.9rem; }
+    .info-value { color: white; font-weight: 500; font-size: 0.9rem; }
+    .status-online { color: var(--accent-green); }
+
+    .links-row { margin-top: 25px; display: flex; gap: 10px; }
+    .link-btn { flex: 1; text-align: center; padding: 10px; background: #2a2a2a; color: white; text-decoration: none; border-radius: 6px; font-size: 0.85rem; transition: 0.2s; }
+    .link-btn:hover { background: #333; }
+    .link-btn.secondary { background: transparent; border: 1px solid #333; }
+    .link-btn.secondary:hover { border-color: #555; }
+
+</style>
+{% endblock %}

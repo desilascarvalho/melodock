@@ -1,0 +1,17 @@
+services:
+  melodock:
+    container_name: melodock
+    build: .
+    image: melodock:latest
+    restart: unless-stopped
+    ports:
+      - "9014:9014"
+    environment:
+      - PUID=0   # ID do seu usuário Linux (digite `id` no terminal para confirmar)
+      - PGID=0   # ID do grupo do seu usuário
+      - TZ=Europe/London
+    volumes:
+      # Onde fica o Banco de Dados (SQLite) e configs
+      - /opt/apps/melodock/config:/config
+      # Onde as músicas serão salvas (Aponte para seu HD externo ou pasta de mídia)
+      - /storage/data/media/music:/downloads
