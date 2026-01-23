@@ -7,115 +7,148 @@
         Melo<span style="color: #1db954;">dock</span>
     </h1>
     
-    <div class="search-wrapper">
-        <input type="text" id="artistInput" 
-               placeholder="Digite o nome do artista..." 
-               autocomplete="off" 
-               class="search-input">
+    <form id="addForm" action="/add_artist" method="POST" class="search-wrapper">
+        <input type="hidden" name="chosen_id" id="chosen_id">
         
-        <button class="search-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        </button>
+        <div style="position: relative; width: 100%;">
+            <input type="text" id="artistInput" name="artist_name" 
+                   placeholder="Pesquise um artista..." autocomplete="off" required 
+                   class="search-input">
+            
+            <button type="submit" class="search-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
 
-        <div id="suggestions" class="suggestions-box"></div>
-    </div>
+            <div id="suggestions" class="suggestions-box"></div>
+        </div>
+        
+    </form>
     
     <div class="search-help">
-        As fotos ajudam a identificar o artista correto. Clique para adicionar.
+        Pressione <strong>Enter</strong> para buscar ou clique na foto do artista.
     </div>
-
-    <form id="addForm" action="/add_artist" method="POST" style="display:none;">
-        <input type="hidden" name="chosen_id" id="chosen_id">
-        <input type="hidden" name="artist_name" id="hidden_name">
-    </form>
 
 </div>
 
 <style>
-    /* LAYOUT BÁSICO */
+    /* Centralização da Página */
     .search-page-container {
-        min-height: 80vh; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; width: 100%;
-        padding-bottom: 100px;
+        min-height: 80vh; /* Ocupa 80% da altura da tela */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding-bottom: 100px; /* Joga um pouco pra cima visualmente */
     }
 
+    /* Logo */
     .main-logo {
-        font-size: 5rem; font-weight: 800; margin-bottom: 40px;
-        letter-spacing: -2px; color: white;
+        font-size: 5rem;
+        font-weight: 800;
+        margin-bottom: 40px;
+        letter-spacing: -2px;
+        color: white;
     }
 
-    /* BARRA DE BUSCA */
+    /* Wrapper da Barra */
     .search-wrapper {
-        width: 100%; max-width: 600px; position: relative; z-index: 10;
+        width: 100%;
+        max-width: 600px; /* Largura máxima da barra */
+        position: relative;
+        z-index: 10; /* Garante que fique acima de tudo */
     }
 
+    /* Input Estilo Google */
     .search-input {
-        width: 100%; padding: 25px 60px 25px 30px;
-        border-radius: 50px; border: 2px solid #333;
-        background: #121212; color: white; font-size: 1.3rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5); outline: none;
-        transition: all 0.3s ease; box-sizing: border-box;
+        width: 100%;
+        padding: 20px 60px 20px 30px; /* Espaço p/ texto e botão */
+        border-radius: 35px;
+        border: 2px solid #333;
+        background: #121212;
+        color: white;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5); /* Sombra suave */
+        outline: none;
+        transition: all 0.3s ease;
+        box-sizing: border-box; /* Garante que padding não estoure largura */
     }
 
     .search-input:focus {
-        border-color: #1db954; background: #181818;
+        border-color: #1db954;
+        background: #181818;
         box-shadow: 0 10px 25px rgba(29, 185, 84, 0.15);
     }
 
+    /* Botão Lupa */
     .search-btn {
-        position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-        background: transparent; border: none; color: #666; cursor: default;
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: none;
+        color: #888;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s;
     }
+    .search-btn:hover { color: #1db954; }
 
-    /* DROPDOWN DE SUGESTÕES */
+    /* Caixa de Sugestões */
     .suggestions-box {
-        position: absolute; top: 100%; left: 20px; right: 20px;
-        background: #1a1a1a; border: 1px solid #333; border-top: none;
-        border-radius: 0 0 20px 20px; z-index: 100;
-        display: none; overflow: hidden; margin-top: -10px; padding-top: 10px;
+        position: absolute;
+        top: 100%; /* Exatamente abaixo do input */
+        left: 15px; /* Alinhado com as bordas arredondadas */
+        right: 15px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-top: none; /* Parece continuação */
+        border-radius: 0 0 20px 20px;
+        z-index: 100;
+        display: none;
+        overflow: hidden;
+        margin-top: 5px; /* Pequeno respiro */
         box-shadow: 0 15px 30px rgba(0,0,0,0.8);
     }
 
+    /* Item da Lista */
     .suggestion-item {
-        padding: 15px 20px; cursor: pointer; border-bottom: 1px solid #252525;
-        display: flex; align-items: center; gap: 15px; transition: background 0.2s;
+        padding: 15px 20px;
+        cursor: pointer;
+        border-bottom: 1px solid #252525;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: background 0.2s;
     }
     .suggestion-item:last-child { border-bottom: none; }
     .suggestion-item:hover { background: #252525; }
 
-    /* ESTILO HÍBRIDO DE AVATAR */
-    .avatar-wrapper {
-        width: 50px; height: 50px; position: relative;
-        flex-shrink: 0; /* Impede que amasse */
+    .artist-avatar {
+        width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid #333;
     }
 
-    .artist-thumb {
-        width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
-        border: 2px solid #333; display: block;
+    .search-help {
+        margin-top: 30px; color: #555; font-size: 0.9rem;
     }
-
-    .artist-initial-fallback {
-        width: 100%; height: 100%; border-radius: 50%;
-        background: linear-gradient(135deg, #333, #555);
-        color: white; font-weight: 800; font-size: 1.2rem;
-        display: flex; align-items: center; justify-content: center;
-        border: 2px solid #444;
-        position: absolute; top: 0; left: 0;
-    }
-
-    .search-help { margin-top: 30px; color: #555; font-size: 0.9rem; }
 </style>
 
 <script>
     const input = document.getElementById('artistInput');
     const suggestions = document.getElementById('suggestions');
-    const form = document.getElementById('addForm');
     const hiddenId = document.getElementById('chosen_id');
-    const hiddenName = document.getElementById('hidden_name');
+    const form = document.getElementById('addForm');
     let timeout = null;
 
     input.addEventListener('input', function() {
         const query = this.value;
+        hiddenId.value = ''; 
         clearTimeout(timeout);
         
         if (query.length < 2) {
@@ -128,43 +161,25 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.length > 0) {
-                        suggestions.innerHTML = data.map(artist => {
-                            const initial = artist.name.charAt(0).toUpperCase();
-                            const safeName = artist.name.replace(/'/g, "\\'");
-                            const hasImage = artist.image && artist.image.length > 0;
-                            
-                            // Lógica Híbrida:
-                            // 1. Tenta por a imagem.
-                            // 2. O evento 'onerror' esconde a imagem e mostra a letra se der erro.
-                            return `
-                            <div class="suggestion-item" onclick="selectArtist('${artist.id}', '${safeName}')">
-                                
-                                <div class="avatar-wrapper">
-                                    <div class="artist-initial-fallback" style="display:none;">${initial}</div>
-                                    
-                                    <img src="${artist.image}" class="artist-thumb"
-                                         onload="this.style.opacity=1"
-                                         onerror="this.style.display='none'; this.previousElementSibling.style.display='flex'">
-                                </div>
-
+                        suggestions.innerHTML = data.map(artist => `
+                            <div class="suggestion-item" onclick="selectArtist('${artist.id}', '${artist.name.replace(/'/g, "\\'")}')">
+                                <img src="${artist.image || 'https://via.placeholder.com/60'}" class="artist-avatar">
                                 <div style="display: flex; flex-direction: column; text-align: left;">
                                     <span style="font-weight: bold; font-size: 1.1rem; color: #fff;">${artist.name}</span>
-                                    <span style="font-size: 0.8rem; color: #888;">${artist.genre || 'Artista'}</span>
-                                    <span style="font-size: 0.7rem; color: #444;">ID: ${artist.id}</span>
+                                    <span style="font-size: 0.8rem; color: #888;">${artist.genre}</span>
                                 </div>
                             </div>
-                        `}).join('');
+                        `).join('');
                         suggestions.style.display = 'block';
                     } else {
                         suggestions.style.display = 'none';
                     }
-                })
-                .catch(err => console.error(err));
+                });
         }, 300); 
     });
 
     document.addEventListener('click', function(e) {
-        if (!document.querySelector('.search-wrapper').contains(e.target)) {
+        if (!form.contains(e.target)) {
             suggestions.style.display = 'none';
         }
     });
@@ -172,10 +187,7 @@
     window.selectArtist = function(id, name) {
         input.value = name;        
         hiddenId.value = id;       
-        hiddenName.value = name;
         suggestions.style.display = 'none';
-        input.style.borderColor = '#1db954';
-        input.value = "Adicionando " + name + "...";
         form.submit();             
     }
 </script>

@@ -26,7 +26,7 @@ class Database:
     def init_db(self):
         """
         Executado SEMPRE que o app inicia.
-        Cria as tabelas se elas não existirem (Zero Config).
+        Cria as tabelas e aplica migrações de schema.
         """
         print(f"🔄 Verificando integridade do banco de dados em: {self.db_path}...")
         
@@ -69,17 +69,30 @@ class Database:
                 manual_url TEXT,
                 file_path TEXT,
                 error_msg TEXT,
+                duration INTEGER DEFAULT 0,
                 FOREIGN KEY(queue_id) REFERENCES queue(id) ON DELETE CASCADE
             )'''
         ]
 
         try:
             with self.get_connection() as conn:
+                # 1. Cria tabelas se não existirem
                 for sql in create_statements:
                     conn.execute(sql)
                 
-                # Insere configurações padrão se não existirem
+                # 2. Insere configurações padrão
                 conn.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('scan_time', '03:00')")
+                
+                # --- AUTO MIGRAÇÃO (CORREÇÃO DO ERRO DE DURATION) ---
+                try:
+                    # Tenta adicionar a coluna duration em bancos antigos
+                    conn.execute("ALTER TABLE tracks ADD COLUMN duration INTEGER DEFAULT 0")
+                    print("✅ Schema Migrado: Coluna 'duration' adicionada a tabela tracks.")
+                except sqlite3.OperationalError:
+                    # Se der erro, é porque a coluna já existe. Ignoramos.
+                    pass
+                # ----------------------------------------------------
+
                 conn.commit()
                 print("✅ Banco de dados pronto e verificado.")
                 

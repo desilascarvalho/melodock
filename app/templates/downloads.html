@@ -34,7 +34,12 @@
             <button onclick="manageQueue('reset_stuck')" class="btn-tool blue" title="Use se o download parou e não avança">
                 🔄 Destravar Fila
             </button>
+            
+            <button onclick="manageQueue('purge_filtered')" class="btn-tool orange" title="Remove itens da fila baseados nas suas configurações de filtro">
+                🔎 Aplicar Filtros Agora
+            </button>
         </div>
+        
         <div class="actions-group right">
             <button onclick="manageQueue('clear_errors')" class="btn-tool red-outline">
                 🗑️ Limpar Erros
@@ -104,13 +109,24 @@
 <script>
 function manageQueue(action) {
     let msg = "Tem certeza?";
+    
     if (action === 'clear_all') msg = "Isso vai apagar TODOS os downloads pendentes e erros. Confirmar?";
     if (action === 'reset_stuck') msg = "Isso vai reiniciar downloads que podem ter travado. Confirmar?";
+    if (action === 'purge_filtered') msg = "Isso vai varrer a fila e APAGAR todos os álbuns que contenham as palavras proibidas ou ultrapassem o limite de faixas definido nas Configurações.\n\nDeseja continuar?";
     
     if (!confirm(msg)) return;
 
     const formData = new FormData();
     formData.append('action', action);
+
+    // Feedback visual imediato para ações pesadas
+    if(action === 'purge_filtered') {
+        const btn = document.querySelector('.btn-tool.orange');
+        if(btn) {
+            btn.disabled = true;
+            btn.innerText = "⏳ Filtrando...";
+        }
+    }
 
     fetch('/api/manage_queue', { method: 'POST', body: formData })
     .then(r => r.json())
@@ -119,6 +135,12 @@ function manageQueue(action) {
             window.location.reload();
         } else {
             alert("Erro: " + data.error);
+            // Restaura botão se deu erro
+            const btn = document.querySelector('.btn-tool.orange');
+            if(btn) {
+                btn.disabled = false;
+                btn.innerText = "🔎 Aplicar Filtros Agora";
+            }
         }
     });
 }
@@ -157,8 +179,13 @@ function deleteItem(id) {
     .actions-group { display: flex; gap: 10px; }
     
     .btn-tool { padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; border: none; }
+    
     .btn-tool.blue { background: #2979ff; color: white; }
     .btn-tool.blue:hover { background: #2264d1; }
+    
+    /* ESTILO NOVO PARA BOTÃO LARANJA */
+    .btn-tool.orange { background: #e67e22; color: white; }
+    .btn-tool.orange:hover { background: #d35400; }
     
     .btn-tool.red-outline { background: transparent; border: 1px solid #ff5252; color: #ff5252; }
     .btn-tool.red-outline:hover { background: rgba(255, 82, 82, 0.1); }

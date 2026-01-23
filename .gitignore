@@ -12,6 +12,9 @@ melodock.db
 music/
 downloads/
 config/artist_images/
+audit.py
+build.sh
+build_counter.txt
 
 # Ignorar configurações de ambiente e logs
 .env

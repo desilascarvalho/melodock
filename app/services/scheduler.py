@@ -3,7 +3,6 @@ import time
 import datetime
 import os
 from .logger import sys_logger
-# REMOVIDO: from .settings import SettingsManager
 from .spider import SpiderService 
 
 MUSIC_LIB_DIR = "/music"
@@ -22,7 +21,12 @@ class DailyScheduler(threading.Thread):
         sys_logger.log("SCHEDULER", "⏰ Varredura de lançamentos iniciada...")
         
         artists = self.db.query("SELECT * FROM artists")
-        BLACKLIST = ["playback", "backing track", "karaoke", "instrumental", "soundtrack"]
+        
+        # --- CARREGA FILTROS DO DB ---
+        keywords_str = self.db.get_setting('ignored_keywords') or "playback,karaoke,instrumental,backing track"
+        BLACKLIST = [k.strip() for k in keywords_str.split(',')]
+        max_tracks_val = int(self.db.get_setting('max_tracks') or 40)
+        # -----------------------------
         
         count_new = 0
         count_synced = 0
@@ -33,7 +37,10 @@ class DailyScheduler(threading.Thread):
                 
                 for item in discography:
                     title_lower = item['title'].lower()
+                    
+                    # Aplica filtros
                     if any(bad in title_lower for bad in BLACKLIST): continue
+                    if item.get('nb_tracks', 0) > max_tracks_val: continue
 
                     exists = self.db.query("SELECT id FROM queue WHERE deezer_id=?", (item['deezer_id'],), one=True)
                     
@@ -84,7 +91,6 @@ class DailyScheduler(threading.Thread):
 
     def run_spider(self):
         try:
-            # Passa o DB diretamente
             spider = SpiderService(self.db, self.metadata, self.downloader)
             spider.run()
         except Exception as e:
@@ -99,13 +105,11 @@ class DailyScheduler(threading.Thread):
                 current_hm = now.strftime("%H:%M")
                 today = now.strftime("%Y-%m-%d")
 
-                # 1. Scan (Lê direto do DB com get_setting)
                 scan_time = self.db.get_setting('scan_time') or '03:00'
                 if current_hm == scan_time and self.last_scan_run != today:
                     self.check_new_releases()
                     self.last_scan_run = today
 
-                # 2. Spider (Lê direto do DB com get_setting)
                 spider_time = self.db.get_setting('spider_schedule_time') or '12:00'
                 if current_hm == spider_time and self.last_spider_run != today:
                     if self.db.get_setting('spider_enabled') == 'true':
