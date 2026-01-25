@@ -1,12 +1,12 @@
-## 🚀 v5.2.9
+## 🚀 v5.3.0
 
-Correções críticas de estabilidade e busca, além do novo sistema de imagens.
+Melhorias nas recomendações e estabilidade.
 
 ### ✨ Melhorias
-- **Imagens via ID:** O sistema agora busca imagens usando o ID único do Deezer, evitando erros com nomes parecidos.
+- **Explorer Inteligente:** A busca na aba Explorer agora retorna artistas *musicalmente similares* ao pesquisado (usando o algoritmo "Fans Also Like" do Deezer), em vez de apenas nomes parecidos.
+- **Imagens via ID:** O sistema agora busca imagens usando o ID único do Deezer, garantindo precisão total.
 - **Auto-Repair:** Se a imagem de um artista não existir localmente, ela é baixada automaticamente da API em tempo real ao abrir a biblioteca.
-- **Cache Inteligente:** Força a atualização visual das imagens no navegador quando a versão do sistema muda.
 
-### 🐛 Correções de Bugs
-- **Explorer Search:** Corrigido erro `405 Method Not Allowed` que impedia a busca de novos artistas na aba Explorer.
-- **Queue Manager:** Corrigido erro de sintaxe (crash) ao tentar usar os botões de "Limpar Fila" ou "Limpar Pendentes".
+### 🐛 Correções
+- **Crash Fix:** Corrigido erro de sintaxe no gerenciamento de fila.
+- **Busca Explorer:** Corrigido erro `405` na página de descoberta.

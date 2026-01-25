@@ -36,7 +36,30 @@ class DeezerDataClient:
             }
         return None
 
+    # --- NOVA FUNÇÃO: RECOMENDAÇÕES REAIS ---
+    def get_related_artists(self, name):
+        """Busca artistas musicalmente similares (Fans also like)"""
+        # 1. Acha o ID do artista pesquisado
+        search = self._get("/search/artist", params={'q': name, 'limit': 1})
+        if not search.get('data'): return []
+        
+        source_id = search['data'][0]['id']
+        
+        # 2. Busca os relacionados a este ID
+        related = self._get(f"/artist/{source_id}/related", params={'limit': 12})
+        
+        results = []
+        for item in related.get('data', []):
+            results.append({
+                'id': str(item['id']),
+                'name': item['name'],
+                'genre': f"{item.get('nb_fan', 0)} fãs", # Deezer não retorna gênero aqui, usamos popularidade
+                'image': item.get('picture_medium', '')
+            })
+        return results
+
     def find_potential_artists(self, name):
+        """Busca simples por nome (usado na Home)"""
         data = self._get("/search/artist", params={'q': name, 'limit': 5})
         results = []
         for item in data.get('data', []):
@@ -54,9 +77,7 @@ class DeezerDataClient:
         next_url = f"/artist/{artist_id}/albums?limit=100"
         target_norm = target_artist_id.lower().strip() if target_artist_id else ""
         
-        # Garante que a blacklist seja uma lista de strings limpas
         if not blacklist: blacklist = []
-        # Normaliza a blacklist para lowercase para comparação justa
         blacklist = [b.lower().strip() for b in blacklist if b.strip()]
 
         while next_url:
@@ -67,21 +88,16 @@ class DeezerDataClient:
                 title = item['title']
                 title_lower = title.lower()
 
-                # 1. FILTRO DE PALAVRAS (O QUE VOCÊ DIGITOU NO SETTINGS)
-                # Verifica se QUALQUER palavra da blacklist está contida no título
                 blocked_word = next((bad for bad in blacklist if bad in title_lower), None)
                 if blocked_word:
                     sys_logger.log("FILTER", f"🚫 Ignorado (Filtro '{blocked_word}'): {title}")
                     continue
 
-                # 2. FILTRO DE TIPO 'COMPILE' (Nativo do Deezer)
-                # Mesmo que não esteja na blacklist, se o Deezer disser que é coletânea, ignora.
                 rec_type = item.get('record_type', 'album').lower()
                 if rec_type == 'compile':
                     sys_logger.log("FILTER", f"🚫 Ignorado (Coletânea): {title}")
                     continue
 
-                # 3. DOUBLE-CHECK DE ARTISTA
                 try:
                     album_artist = item.get('artist', {}).get('name', '').lower().strip()
                     if not album_artist:

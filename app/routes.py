@@ -249,6 +249,26 @@ def get_image(artist_id):
 
     return "", 404
 
+# --- ROTA EXPLORER (CORRIGIDA PARA RECOMENDAÇÕES REAIS) ---
+@main_bp.route('/explorer', methods=['GET', 'POST'])
+def explorer():
+    recommendations = []
+    search_term = ""
+    
+    if request.method == 'POST':
+        search_term = request.form.get('artist_name', '').strip()
+        if len(search_term) > 1:
+            meta = get_meta()
+            # MUDANÇA AQUI: Usa get_related_artists em vez de find_potential_artists
+            recommendations = meta.get_related_artists(search_term)
+            
+            db = get_db()
+            for rec in recommendations:
+                exists = db.query("SELECT 1 FROM artists WHERE deezer_id=?", (rec['id'],), one=True)
+                rec['in_library'] = bool(exists)
+
+    return render_template('explorer.html', recommendations=recommendations, search_term=search_term)
+
 # --- DEMAIS ROTAS ---
 @main_bp.route('/artist/<path:artist_name>')
 def artist_profile(artist_name):
@@ -271,27 +291,6 @@ def delete_artist():
 def logs(): return render_template('logs.html')
 @main_bp.route('/api/logs_data')
 def api_logs(): return jsonify(sys_logger.get_logs())
-@main_bp.route('/explorer', methods=['GET', 'POST'])
-def explorer():
-    recommendations = []
-    search_term = ""
-    
-    if request.method == 'POST':
-        search_term = request.form.get('artist_name', '').strip()
-        if len(search_term) > 1:
-            # Reutiliza a lógica de busca do Deezer
-            meta = get_meta()
-            # Busca artistas relacionados ou similares (usando a função que já existe)
-            # Nota: O método `find_potential_artists` retorna uma lista limpa
-            recommendations = meta.find_potential_artists(search_term)
-            
-            # Marca quem já está na biblioteca
-            db = get_db()
-            for rec in recommendations:
-                exists = db.query("SELECT 1 FROM artists WHERE deezer_id=?", (rec['id'],), one=True)
-                rec['in_library'] = bool(exists)
-
-    return render_template('explorer.html', recommendations=recommendations, search_term=search_term)
 @main_bp.route('/api/manage_queue', methods=['POST'])
 def manage_queue():
     action = request.form.get('action')
