@@ -1,4 +1,4 @@
-## 🚀 v5.3.2
+## 🚀 v5.2.9
 
 Correções críticas de estabilidade e busca, além do novo sistema de imagens.
 
