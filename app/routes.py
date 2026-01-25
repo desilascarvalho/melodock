@@ -41,11 +41,9 @@ def dashboard():
     
     artists_raw = db.query(f"SELECT * FROM artists {order} LIMIT ? OFFSET ?", (per_page, offset))
     
-    # Processa para adicionar status visual (calculado, não do banco)
     artists_list = []
     for art in artists_raw:
         a_dict = dict(art)
-        # Verifica se tem algo pendente/baixando para este artista
         pending = db.query("SELECT 1 FROM queue WHERE artist=? AND status IN ('pending', 'downloading')", (art['name'],), one=True)
         error = db.query("SELECT 1 FROM queue WHERE artist=? AND status='error'", (art['name'],), one=True)
         
@@ -87,17 +85,14 @@ def settings():
                            max_tracks=db.get_setting('max_tracks') or "40",
                            scan_time=db.get_setting('scan_time') or "03:00")
 
-# --- ROTA DE SYNC QUE FALTAVA ---
+# --- SYNC ---
 def background_sync(app):
     with app.app_context():
-        sys_logger.log("SYNC", "🔄 Iniciando sincronização manual...")
+        sys_logger.log("SYNC", "🔄 Sincronizando biblioteca...")
         db = get_db()
         artists = db.query("SELECT * FROM artists")
         for art in artists:
-            # Reutiliza a lógica de background_add para buscar novos álbuns
-            # Mas sem adicionar duplicados
-            try:
-                background_add(app, art['deezer_id'], art['name'])
+            try: background_add(app, art['deezer_id'], art['name'])
             except: pass
         sys_logger.log("SYNC", "✅ Sincronização finalizada.")
 
@@ -105,33 +100,31 @@ def background_sync(app):
 def sync_library():
     app_obj = current_app._get_current_object()
     threading.Thread(target=background_sync, args=(app_obj,)).start()
-    return jsonify({'message': 'Sincronização iniciada em background.'})
+    return jsonify({'message': 'Sincronização iniciada.'})
 
-# --- WORKER ADD ARTIST ---
+# --- WORKER PRINCIPAL ---
 def background_add(app, aid, aname):
     with app.app_context():
         meta = get_meta(); db = get_db(); dl = get_dl()
         sys_logger.log("SYSTEM", f"Processando {aname}...")
         
-        keywords = db.get_setting('ignored_keywords') or "playback,karaoke"
+        keywords = db.get_setting('ignored_keywords') or ""
         BLACKLIST = [k.strip().lower() for k in keywords.split(',') if k.strip()]
         MAX_TRACKS = int(db.get_setting('max_tracks') or 40)
 
         art_data = meta.get_artist_by_id(aid) if aid else meta.search_artist(aname)
         if not art_data: return
 
-        # ATUALIZAÇÃO DO ARTISTA (Garante que apareça na biblioteca)
         db.execute("REPLACE INTO artists (deezer_id, name, image_url, last_sync) VALUES (?, ?, ?, CURRENT_TIMESTAMP)", 
                    (art_data['id'], art_data['name'], art_data['image']))
         
-        # Salva imagem localmente
+        # Tenta baixar a imagem (se já existir localmente, o DL ignora)
         dl.save_artist_image(art_data['name'], art_data['image'])
         
         albums = meta.get_discography(art_data['id'], target_artist_id=art_data['name'], blacklist=BLACKLIST)
         cnt = 0
         for alb in albums:
             if alb.get('track_count', 0) > MAX_TRACKS: continue
-
             if not db.query("SELECT 1 FROM queue WHERE deezer_id=?", (alb['deezer_id'],), one=True):
                 cur = db.execute("INSERT INTO queue (deezer_id, title, artist, cover_url, status) VALUES (?, ?, ?, ?, 'pending')",
                            (alb['deezer_id'], alb['title'], art_data['name'], alb['cover']))
@@ -142,8 +135,7 @@ def background_add(app, aid, aname):
                     db.execute("INSERT INTO tracks (queue_id, deezer_id, title, artist, track_number) VALUES (?, ?, ?, ?, ?)",
                                (qid, t['deezer_id'], t['title'], t['artist'], t['track_num']))
         
-        if cnt > 0:
-            sys_logger.log("SUCCESS", f"Found {cnt} new albums for {art_data['name']}.")
+        if cnt > 0: sys_logger.log("SUCCESS", f"Found {cnt} new albums for {art_data['name']}.")
 
 @main_bp.route('/add_artist', methods=['POST'])
 def add_artist():
@@ -151,7 +143,7 @@ def add_artist():
     threading.Thread(target=background_add, args=(app, request.form.get('chosen_id'), request.form.get('artist_name'))).start()
     return redirect('/downloads')
 
-# --- IMPORTAÇÃO DE ARQUIVOS LOCAIS ---
+# --- IMPORTAÇÃO ---
 def similar(a, b): return SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
 def background_import_existing(app, data):
@@ -165,12 +157,10 @@ def background_import_existing(app, data):
             art_data = meta.get_artist_by_id(deezer_id)
             if not art_data: continue
 
-            # Força entrada no banco
             db.execute("REPLACE INTO artists (deezer_id, name, image_url, last_sync) VALUES (?, ?, ?, CURRENT_TIMESTAMP)", 
                        (art_data['id'], art_data['name'], art_data['image']))
             dl.save_artist_image(art_data['name'], art_data['image'])
             
-            # Lógica de vínculo de álbuns...
             albums = meta.get_discography(art_data['id'], target_artist_id=art_data['name'])
             local_folder = item.get('folder')
             artist_path = os.path.join("/music", local_folder)
@@ -185,7 +175,6 @@ def background_import_existing(app, data):
                         if similar(clean_dz, clean_loc) > 0.75 or clean_dz in clean_loc:
                             match = True
                             break
-                    
                     if match:
                         if not db.query("SELECT 1 FROM queue WHERE deezer_id=?", (alb['deezer_id'],), one=True):
                             cur = db.execute("INSERT INTO queue (deezer_id, title, artist, cover_url, status) VALUES (?, ?, ?, ?, 'completed')",
@@ -216,11 +205,29 @@ def search_live():
     if len(q) < 2: return jsonify([])
     return jsonify(get_meta().find_potential_artists(q))
 
-# ROTAS BÁSICAS
+# --- ROTA DE IMAGEM CORRIGIDA (Buscar localmente se não houver cache) ---
 @main_bp.route('/artist_image/<artist_name>')
 def get_image(artist_name):
-    dl = get_dl(); safe = dl.sanitize(artist_name); path = f"/config/artist_images/{safe}.jpg"
-    return send_file(path) if os.path.exists(path) else ("", 404)
+    dl = get_dl()
+    safe_name = dl.sanitize(artist_name)
+    
+    # 1. Tenta imagem baixada pelo Melodock
+    config_path = f"/config/artist_images/{safe_name}.jpg"
+    if os.path.exists(config_path):
+        return send_file(config_path)
+    
+    # 2. Tenta imagens locais na pasta de música
+    # Procura por arquivos de imagem comuns na raiz do artista
+    music_path = os.path.join("/music", safe_name)
+    if os.path.exists(music_path):
+        for img_name in ['folder.jpg', 'cover.jpg', 'artist.jpg', 'poster.jpg', 'fanart.jpg', 'folder.png', 'cover.png']:
+            local_img = os.path.join(music_path, img_name)
+            if os.path.exists(local_img):
+                return send_file(local_img)
+
+    return "", 404
+
+# --- DEMAIS ROTAS ---
 @main_bp.route('/artist/<path:artist_name>')
 def artist_profile(artist_name):
     db = get_db(); artist = db.query("SELECT * FROM artists WHERE name=?", (artist_name,), one=True)
@@ -248,61 +255,35 @@ def explorer(): return render_template('explorer.html')
 def manage_queue():
     action = request.form.get('action')
     db = get_db()
-    
     if action == 'clear_all':
         db.execute("DELETE FROM tracks WHERE status != 'completed'")
         db.execute("DELETE FROM queue WHERE status != 'completed'")
         sys_logger.log("USER", "☢️ Fila limpa.")
-        
     elif action == 'clear_pending':
         db.execute("DELETE FROM tracks WHERE status='pending'")
         db.execute("DELETE FROM queue WHERE status='pending'")
         sys_logger.log("USER", "🧹 Pendentes limpos.")
-        
     elif action == 'reset_stuck':
         db.execute("UPDATE queue SET status='pending' WHERE status='downloading'")
         db.execute("UPDATE tracks SET status='pending' WHERE status='downloading'")
         sys_logger.log("USER", "🔄 Destravado.")
-        
     elif action == 'purge_filtered':
-        # 1. Carrega regras
         keywords = db.get_setting('ignored_keywords') or ""
         blacklist = [k.strip().lower() for k in keywords.split(',') if k.strip()]
         max_tracks = int(db.get_setting('max_tracks') or 40)
-        
-        # 2. Analisa a fila atual
-        pending_albums = db.query("SELECT * FROM queue WHERE status IN ('pending', 'high_priority', 'error')")
-        deleted_count = 0
-        
-        for alb in pending_albums:
-            should_delete = False
-            reason = ""
-            
-            # Checa Título
-            title_lower = alb['title'].lower()
-            if any(bad in title_lower for bad in blacklist):
-                should_delete = True
-                reason = "Palavra proibida"
-            
-            # Checa Quantidade de Faixas (Conta no banco)
-            if not should_delete:
-                track_count = db.query("SELECT COUNT(*) as c FROM tracks WHERE queue_id=?", (alb['id'],), one=True)['c']
-                if track_count > max_tracks:
-                    should_delete = True
-                    reason = f"Excesso de faixas ({track_count})"
-            
-            # Deleta se necessário
-            if should_delete:
+        pending = db.query("SELECT * FROM queue WHERE status IN ('pending', 'high_priority', 'error')")
+        cnt = 0
+        for alb in pending:
+            should_del = False
+            if any(b in alb['title'].lower() for b in blacklist): should_del = True
+            if not should_del:
+                c = db.query("SELECT COUNT(*) as c FROM tracks WHERE queue_id=?", (alb['id'],), one=True)['c']
+                if c > max_tracks: should_del = True
+            if should_del:
                 db.execute("DELETE FROM tracks WHERE queue_id=?", (alb['id'],))
                 db.execute("DELETE FROM queue WHERE id=?", (alb['id'],))
-                deleted_count += 1
-                sys_logger.log("FILTER", f"🗑️ Removido da fila: {alb['title']} ({reason})")
-        
-        if deleted_count == 0:
-            sys_logger.log("FILTER", "Fila analisada. Nenhum item violou as regras.")
-        else:
-            sys_logger.log("FILTER", f"Limpeza concluída. {deleted_count} álbuns removidos.")
-
+                cnt += 1
+        sys_logger.log("FILTER", f"Limpeza concluída. {cnt} removidos.")
     return jsonify({'success': True})
 
 def start_queue_worker(app):
