@@ -1,5 +1,4 @@
 flask
 requests
-yt-dlp
 mutagen
 schedule

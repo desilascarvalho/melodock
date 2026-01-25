@@ -1,53 +1,48 @@
-from flask import Flask, jsonify
+from flask import Flask
+import os
 from .database import Database
-from .services.deezer_data import DeezerDataClient 
+from .services.deezer_data import DeezerDataClient
 from .services.downloader import Downloader
-from .services.queue import QueueWorker
-from .services.scheduler import DailyScheduler
+from .routes import main_bp, start_queue_worker
 from .services.deezer import DeezerClient as DeezerExplorer
-
-DB_PATH = "/config/melodock.db"
+from .services.logger import sys_logger
 
 def create_app():
     app = Flask(__name__)
     
-    # 1. INICIALIZAÇÃO CRÍTICA DO BANCO
-    db = Database(DB_PATH)
-    db.init_db() 
+    # 1. Recupera a Versão (MANTIDO DO SEU CÓDIGO)
+    try:
+        with open("version.txt", "r") as f:
+            version = f.read().strip()
+    except:
+        version = os.getenv("APP_VERSION", "vDev")
+
+    # Log Inicial
+    sys_logger.log("SYSTEM", f"🎵 Melodock Iniciado {version}")
     
-    # 2. Serviços
-    metadata_provider = DeezerDataClient()
-    downloader = Downloader()
+    # 2. Inicialização do Banco e Serviços
+    db = Database("/config/melodock.db")
+    db.init_db()
+    
+    metadata = DeezerDataClient()
+    downloader = Downloader(db)
     explorer = DeezerExplorer()
     
-    # 3. Workers
-    worker = QueueWorker(db, metadata_provider, downloader)
-    worker.start()
-    
-    # Passamos 'downloader' para o Scheduler
-    scheduler = DailyScheduler(db, metadata_provider, downloader)
-    scheduler.start()
-    
-    # 4. Configuração do Flask
     app.config['DB'] = db
-    app.config['METADATA'] = metadata_provider
+    app.config['METADATA'] = metadata
     app.config['DOWNLOADER'] = downloader
     app.config['EXPLORER'] = explorer
     
-    # --- VERSÃO DINÂMICA (Lê do arquivo gerado pelo Docker) ---
-    try:
-        with open("version.txt", "r") as f:
-            version_str = f.read().strip()
-    except FileNotFoundError:
-        version_str = "Dev Mode (Sem version.txt)"
-
-    # Injeta a variável 'system_version' em TODOS os templates automaticamente
+    # 3. Injeta a versão E o resumo em todos os templates
     @app.context_processor
-    def inject_version():
-        return dict(system_version=version_str)
-    # ----------------------------------------------------------
+    def inject_vars():
+        return dict(
+            system_version=version, # Lê a variável dinâmica que pegamos lá em cima
+            update_summary="Correção crítica: Botão 'Limpar Fila' interrompe downloads imediatamente. Importação corrigida para não baixar arquivos existentes."
+        )
     
-    from .routes import main_bp
     app.register_blueprint(main_bp)
+    
+    start_queue_worker(app)
     
     return app
