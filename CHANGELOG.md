@@ -1,8 +1,8 @@
-## 🚀 v5.3.1
+## 🚀 v5.3.2
 
-Correção definitiva de metadados para Plex e Jellyfin.
+Correção rigorosa de tags para Media Servers (Plex/Jellyfin).
 
 ### ✨ Melhorias
-- **Tagging Rigoroso:** O sistema agora força o salvamento de apenas **um artista** na tag de metadados, impedindo que o Plex separe faixas incorretamente (ex: "Artist A; Artist B").
-- **Feat Handling:** Artistas convidados (Feat.) são movidos obrigatoriamente para o Título da música e removidos da tag Artista.
-- **Limpeza:** A tag oculta `artists` (plural) foi desativada para garantir compatibilidade máxima com media servers.
+- **Anti-Split:** Implementado separador textual (` & `) para artistas múltiplos. Isso impede que o Plex use `;` para quebrar o artista em duas entradas separadas.
+- **Tag Cleaning:** Tags desnecessárias (Compositor, Envolvidos, Lista de Artistas) foram desativadas para manter os metadados limpos.
+- **Single Artist:** Reforço na configuração para manter o artista principal no foco.

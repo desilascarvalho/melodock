@@ -14,7 +14,6 @@ class Downloader:
 
     def sanitize(self, name):
         if not name: return "Unknown"
-        # Limpeza segura para nomes de pastas
         return "".join([c for c in name if c.isalpha() or c.isdigit() or c in ' .-_()']).strip()
 
     def _login(self):
@@ -32,19 +31,12 @@ class Downloader:
             return False
 
     def save_artist_image(self, artist_name, url):
-        """Baixa a imagem do artista para a pasta de config"""
         try:
             if not url: return False
             safe_name = self.sanitize(artist_name)
             save_path = f"/config/artist_images/{safe_name}.jpg"
-            
-            # Se já existe, não baixa de novo
             if os.path.exists(save_path): return True
-            
-            # Cria diretório se não existir
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            
-            # Baixa
             res = requests.get(url, stream=True, timeout=10)
             if res.status_code == 200:
                 with open(save_path, 'wb') as f:
@@ -64,7 +56,7 @@ class Downloader:
             qual_setting = self.db.get_setting('download_quality') or '3'
             
             # =========================================================
-            # CONFIGURAÇÃO DEEMIX (MODO PLEX RIGOROSO)
+            # CONFIGURAÇÃO DEEMIX (MODO SINGLE ARTIST RIGOROSO)
             # =========================================================
             settings = {
                 "downloadLocation": target_folder,
@@ -73,8 +65,8 @@ class Downloader:
                 "playlistTracknameTemplate": "%position% - %artist% - %title%",
                 "createPlaylistFolder": True,
                 "playlistNameTemplate": "%playlist%",
-                "createArtistFolder": False, # Melodock gerencia as pastas
-                "createAlbumFolder": False,  # Melodock gerencia as pastas
+                "createArtistFolder": False, 
+                "createAlbumFolder": False,
                 "albumNameTemplate": "%artist% - %album%",
                 "createCDFolder": True,
                 "createStructurePlaylist": False,
@@ -108,14 +100,17 @@ class Downloader:
                 "removeAlbumVersion": False,
                 "removeDuplicateArtists": True,
                 
-                # --- SOLUÇÃO DE METADADOS ---
-                # "2" = Move feat para o título E remove da tag Artist
+                # --- CORREÇÃO DE TAGS ---
+                # Move feat para o título
                 "featuredToTitle": "2", 
                 "titleCasing": "nothing",
                 "artistCasing": "nothing",
                 
-                # Separador visual apenas (caso sobre algo), mas queremos evitar splits
-                "multiArtistSeparator": " & ", 
+                # IMPORTANTE: Força um separador de texto simples.
+                # Isso impede que o Plex veja ";" e separe os artistas.
+                # O resultado será "Artista A & Artista B" em um único campo, 
+                # evitando duplicidade na biblioteca.
+                "multiArtistSeparator": " & ",
                 
                 "tags": {
                     "title": True, 
@@ -140,20 +135,22 @@ class Downloader:
                     "lyrics": False, 
                     "syncedLyrics": False, 
                     "copyright": False,
-                    "composer": True, 
+                    
+                    # DESATIVANDO TUDO QUE PODE CAUSAR DUPLICIDADE
+                    "composer": False, 
                     "involvedPeople": False, 
                     "source": False, 
                     "rating": False,
                     "savePlaylistAsCompilation": False, 
                     "useNullSeparator": False, 
                     "saveID3v1": True,
-                    "multiArtistSeparator": "default", 
-                    "singleAlbumArtist": False, 
+                    
+                    # Reforça o separador visual
+                    "multiArtistSeparator": " & ", 
+                    "singleAlbumArtist": True, 
                     "coverDescriptionUTF8": False,
                     
-                    # --- O SEGREDO ESTÁ AQUI ---
-                    # Desativa a tag de lista de artistas (que o Plex usa para separar)
-                    # Força o Plex a ler apenas a tag 'artist' principal
+                    # Oculta tag plural
                     "artists": False 
                 }
             }
@@ -161,16 +158,13 @@ class Downloader:
             url = f"https://www.deezer.com/track/{tid}"
             download_obj = generateDownloadObject(self.dz, url, settings['maxBitrate'])
             
-            # Listener Mudo
             class Listener:
                 def send(self, k, v=None): pass
                 def sendError(self, e, v=None): pass
 
-            # Inicia Download
             dmx = DeemixDownloader(self.dz, download_obj, settings, Listener())
             dmx.start()
 
-            # Verificação de arquivo (Timeout 45s)
             for _ in range(45):
                 time.sleep(1)
                 if os.path.exists(target_folder):
