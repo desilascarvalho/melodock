@@ -1,5 +1,6 @@
 import os
 import time
+import requests
 from deezer import Deezer
 from deemix import generateDownloadObject
 from deemix.downloader import Downloader as DeemixDownloader
@@ -13,11 +14,12 @@ class Downloader:
 
     def sanitize(self, name):
         if not name: return "Unknown"
-        # Limpeza agressiva para evitar pastas zoadas
+        # Limpeza segura para nomes de pastas
         return "".join([c for c in name if c.isalpha() or c.isdigit() or c in ' .-_()']).strip()
 
     def _login(self):
         try:
+            if self.logged_in: return True
             arl = self.db.get_setting('deezer_arl')
             if not arl:
                 sys_logger.log("DL", "⚠️ ARL ausente. Configure em Ajustes.")
@@ -29,18 +31,47 @@ class Downloader:
             sys_logger.log("ERROR", f"Login Deezer falhou: {e}")
             return False
 
+    def save_artist_image(self, artist_name, url):
+        """Baixa a imagem do artista para a pasta de config"""
+        try:
+            if not url: return False
+            safe_name = self.sanitize(artist_name)
+            save_path = f"/config/artist_images/{safe_name}.jpg"
+            
+            # Se já existe, não baixa de novo
+            if os.path.exists(save_path): return True
+            
+            # Cria diretório se não existir
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            
+            # Baixa
+            res = requests.get(url, stream=True, timeout=10)
+            if res.status_code == 200:
+                with open(save_path, 'wb') as f:
+                    for chunk in res.iter_content(1024):
+                        f.write(chunk)
+                return True
+            return False
+        except Exception as e:
+            sys_logger.log("ERROR", f"Erro ao salvar imagem de {artist_name}: {e}")
+            return False
+
     def download_track(self, track_meta, target_folder):
         try:
             if not self._login(): return False
 
             tid = track_meta.get('deezer_id')
-            if not tid: return False
+            # O 'title' e 'track_num' aqui são usados apenas para log/display se necessário,
+            # o Deemix vai pegar os dados reais da API.
+            
+            # No entanto, para garantir que o PLEX não fique louco, 
+            # precisamos que o artista principal seja passado corretamente se formos usar templates customizados.
+            # Mas o Deemix lida bem com isso se usarmos a opção featuredToTitle correta.
 
-            # Qualidade vinda do banco (1, 3, 9)
             qual_setting = self.db.get_setting('download_quality') or '3'
             
             # =========================================================
-            # CONFIGURAÇÃO DEEMIX (BASEADA NO SEU JSON)
+            # CONFIGURAÇÃO DEEMIX (CORRIGIDA PARA PLEX)
             # =========================================================
             settings = {
                 "downloadLocation": target_folder,
@@ -49,9 +80,8 @@ class Downloader:
                 "playlistTracknameTemplate": "%position% - %artist% - %title%",
                 "createPlaylistFolder": True,
                 "playlistNameTemplate": "%playlist%",
-                "createArtistFolder": False, # Desativado pois o Melodock gerencia as pastas
-                "artistNameTemplate": "%artist%",
-                "createAlbumFolder": False,  # Desativado pois o Melodock gerencia as pastas
+                "createArtistFolder": False, # Melodock gerencia
+                "createAlbumFolder": False,  # Melodock gerencia
                 "albumNameTemplate": "%artist% - %album%",
                 "createCDFolder": True,
                 "createStructurePlaylist": False,
@@ -78,14 +108,16 @@ class Downloader:
                 "localArtworkFormat": "jpg",
                 "saveArtwork": True,
                 "coverImageTemplate": "cover",
-                "saveArtworkArtist": True,
-                "artistImageTemplate": "folder",
+                "saveArtworkArtist": True, # Nós salvamos manualmente
                 "jpegImageQuality": 100,
                 "dateFormat": "Y-M-D",
                 "albumVariousArtists": True,
                 "removeAlbumVersion": False,
                 "removeDuplicateArtists": True,
-                "featuredToTitle": "0",
+                
+                # --- AQUI ESTÁ O SEGREDO DO PLEX ---
+                # "2" move o feat para o título E remove da tag artist
+                "featuredToTitle": "2", 
                 "titleCasing": "nothing",
                 "artistCasing": "nothing",
                 "executeCommand": "",
@@ -104,7 +136,7 @@ class Downloader:
             url = f"https://www.deezer.com/track/{tid}"
             download_obj = generateDownloadObject(self.dz, url, settings['maxBitrate'])
             
-            # Listener Mudo (Para não poluir o log do Melodock)
+            # Listener Mudo
             class Listener:
                 def send(self, k, v=None): pass
                 def sendError(self, e, v=None): pass
@@ -113,14 +145,13 @@ class Downloader:
             dmx = DeemixDownloader(self.dz, download_obj, settings, Listener())
             dmx.start()
 
-            # Verificação de arquivo (Timeout 30s)
-            for _ in range(30):
+            # Verificação de arquivo (Timeout 45s para FLAC)
+            for _ in range(45):
                 time.sleep(1)
-                for f in os.listdir(target_folder):
-                    if f.endswith(('.mp3', '.flac', '.m4a')):
-                        # Força Tags Corretas (Plex Fix)
-                        # Mesmo que o Deemix taggeie, nós garantimos que o Artist seja o principal
-                        # para evitar o problema de "Grupo Orion; Joel Alves"
+                # Verifica se existe algum arquivo de áudio na pasta
+                if os.path.exists(target_folder):
+                    files = [f for f in os.listdir(target_folder) if f.endswith(('.mp3', '.flac', '.m4a'))]
+                    if files:
                         return True
             
             return False
@@ -128,6 +159,3 @@ class Downloader:
         except Exception as e:
             sys_logger.log("ERROR", f"Erro Deemix: {e}")
             return False
-
-    def save_artist_image(self, artist_name, url):
-        return True

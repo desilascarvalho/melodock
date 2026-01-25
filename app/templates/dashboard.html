@@ -2,143 +2,132 @@
 {% block content %}
 
 <style>
-    /* Cabeçalho da Página */
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #222;
-        flex-wrap: wrap;
-        gap: 20px;
-    }
-    
+    /* Cabeçalho */
+    .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #222; flex-wrap: wrap; gap: 20px; }
     .page-title h1 { margin: 0; font-size: 2.2rem; letter-spacing: -1px; }
     .page-title p { color: #666; margin: 5px 0 0 0; font-size: 0.9rem; }
 
-    /* Área de Controles (Filtros e Botões) */
+    /* Controles */
     .controls-wrapper { display: flex; align-items: center; gap: 20px; }
-
-    /* Grupo de Filtros (Ordenação) */
-    .filter-group {
-        display: flex; background: #1a1a1a; padding: 4px;
-        border-radius: 50px; border: 1px solid #333;
-    }
-
-    .btn-filter {
-        padding: 8px 16px; border-radius: 50px; text-decoration: none;
-        font-size: 0.85rem; font-weight: 600; color: #888;
-        transition: 0.2s; display: flex; align-items: center; gap: 5px;
-    }
+    .filter-group { display: flex; background: #1a1a1a; padding: 4px; border-radius: 50px; border: 1px solid #333; }
+    .btn-filter { padding: 8px 16px; border-radius: 50px; text-decoration: none; font-size: 0.85rem; font-weight: 600; color: #888; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
     .btn-filter:hover { color: white; }
-    .btn-filter.active { background: #333; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .btn-filter.active { background: #333; color: white; }
     .arrow { font-size: 0.7rem; margin-left: 2px; }
 
-    /* Botões de Ação */
     .actions { display: flex; gap: 10px; }
-    .btn-action {
-        background: #222; color: white; border: none;
-        padding: 10px 20px; border-radius: 50px;
-        text-decoration: none; font-weight: 600; font-size: 0.9rem;
-        transition: 0.2s; cursor: pointer;
-        display: inline-flex; align-items: center; justify-content: center;
-    }
+    .btn-action { background: #222; color: white; border: none; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.2s; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
     .btn-action:hover:not(:disabled) { background: #333; }
     .btn-action:disabled { opacity: 0.6; cursor: not-allowed; }
-    
     .btn-primary { background: #1db954; color: black; }
     .btn-primary:hover { background: #1ed760; transform: scale(1.05); }
-    
     .btn-sync { background: #2a2a2a; border: 1px solid #444; }
     .btn-sync:hover { border-color: #666; }
 
-    /* GRID DE ARTISTAS */
+    /* GRID CIRCULAR */
     .artist-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 30px;
+        justify-items: center;
     }
 
-    .artist-card {
-        aspect-ratio: 1 / 1;
-        border-radius: 12px;
-        position: relative;
-        overflow: hidden;
+    .artist-wrapper {
         display: flex;
         flex-direction: column;
-        justify-content: flex-end;
-        padding: 20px;
-        text-decoration: none;
-        transition: transform 0.2s, box-shadow 0.2s;
+        align-items: center;
+        text-align: center;
+        width: 100%;
+        position: relative;
+    }
+
+    /* O Card agora é o Círculo */
+    .artist-circle {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 15px;
         background-color: #1a1a1a;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 2px solid transparent;
     }
 
-    .artist-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        z-index: 2;
+    .artist-wrapper:hover .artist-circle {
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        border-color: #333;
     }
 
-    /* Link Invisível sobre o card */
+    /* Imagem do Artista */
+    .artist-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* Overlay clicável invisível */
     .card-link-overlay {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
     }
 
-    /* Botão de Excluir (Mini) */
+    /* Fallback (Letra) se não tiver imagem */
+    .fallback-letter {
+        width: 100%; height: 100%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 4rem; font-weight: 800; color: rgba(255,255,255,0.3);
+    }
+
+    /* Botão de Excluir (Posicionado no canto do círculo) */
     .delete-form {
-        position: absolute; top: 10px; right: 10px; z-index: 20;
+        position: absolute; top: 0; right: 0; z-index: 20;
         opacity: 0; transition: opacity 0.2s;
     }
-    .artist-card:hover .delete-form { opacity: 1; }
+    .artist-wrapper:hover .delete-form { opacity: 1; }
 
     .btn-delete-mini {
         width: 28px; height: 28px; border-radius: 50%; border: none;
-        background: rgba(0,0,0,0.5); color: white; cursor: pointer;
+        background: #ff5252; color: white; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
-        backdrop-filter: blur(4px); font-size: 14px; transition: 0.2s;
-    }
-    .btn-delete-mini:hover { background: #ff5252; transform: scale(1.1); }
-
-    /* Marca d'água (Letra) */
-    .watermark {
-        position: absolute; top: -20px; right: -10px;
-        font-size: 8rem; font-weight: 900; opacity: 0.1;
-        color: white; pointer-events: none; line-height: 1;
+        font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
 
-    /* Texto do Artista */
+    /* Texto abaixo do círculo */
     .artist-name {
-        font-size: 1.2rem; font-weight: 700; color: white; margin: 0;
-        z-index: 10; text-shadow: 0 2px 4px rgba(0,0,0,0.5); line-height: 1.1;
-        pointer-events: none;
-    }
-
-    .artist-genre {
-        font-size: 0.8rem; color: rgba(255,255,255,0.7);
-        margin-top: 5px; z-index: 10; pointer-events: none;
+        font-size: 1rem;
+        font-weight: 600;
+        color: white;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        z-index: 5;
     }
 
     /* Pílula de Status */
     .status-dot {
-        position: absolute; top: 15px; left: 15px; width: 10px; height: 10px;
-        border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 10;
+        position: absolute; bottom: 10px; right: 10px; width: 12px; height: 12px;
+        border-radius: 50%; border: 2px solid #121212; z-index: 15;
     }
     .status-ok { background-color: #1db954; }
     .status-sync { background-color: #2196f3; animation: pulse 1s infinite; }
     .status-err { background-color: #ff5252; }
     
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    @keyframes pulse { 0% { transform: scale(0.9); } 50% { transform: scale(1.2); } 100% { transform: scale(0.9); } }
 
-    /* Gradientes */
-    .grad-0 { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
-    .grad-1 { background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 100%); }
-    .grad-2 { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-    .grad-3 { background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); }
-    .grad-4 { background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); }
-    .grad-5 { background: linear-gradient(135deg, #cb2d3e 0%, #ef473a 100%); }
-    .grad-6 { background: linear-gradient(135deg, #34e89e 0%, #0f3443 100%); }
-    .grad-7 { background: linear-gradient(135deg, #200122 0%, #6f0000 100%); }
+    /* Gradientes de Fallback */
+    .grad-0 { background: linear-gradient(135deg, #1e3c72, #2a5298); }
+    .grad-1 { background: linear-gradient(135deg, #833ab4, #fd1d1d); }
+    .grad-2 { background: linear-gradient(135deg, #11998e, #38ef7d); }
+    .grad-3 { background: linear-gradient(135deg, #ff9966, #ff5e62); }
+    .grad-4 { background: linear-gradient(135deg, #4b6cb7, #182848); }
+    .grad-5 { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
+    .grad-6 { background: linear-gradient(135deg, #34e89e, #0f3443); }
+    .grad-7 { background: linear-gradient(135deg, #200122, #6f0000); }
 
     /* Paginação */
     .pagination { display: flex; justify-content: center; gap: 15px; margin-top: 40px; align-items: center; }
@@ -148,7 +137,7 @@
 <div class="page-header">
     <div class="page-title">
         <h1>Sua Biblioteca</h1>
-        <p>{{ stats.artists }} Artistas Gerenciados</p>
+        <p>{{ stats.artists }} Artistas</p>
     </div>
 
     <div class="controls-wrapper">
@@ -157,89 +146,76 @@
                class="btn-filter {% if 'date' in current_sort %}active{% endif %}">
                📅 Recentes 
                {% if current_sort == 'date_desc' %}<span class="arrow">⬇</span>
-               {% elif current_sort == 'date_asc' %}<span class="arrow">⬆</span>
-               {% endif %}
+               {% elif current_sort == 'date_asc' %}<span class="arrow">⬆</span>{% endif %}
             </a>
-
             <a href="?sort={{ 'name_desc' if current_sort == 'name_asc' else 'name_asc' }}" 
                class="btn-filter {% if 'name' in current_sort %}active{% endif %}">
                🔤 Nome
                {% if current_sort == 'name_asc' %}<span class="arrow">⬇</span>
-               {% elif current_sort == 'name_desc' %}<span class="arrow">⬆</span>
-               {% endif %}
+               {% elif current_sort == 'name_desc' %}<span class="arrow">⬆</span>{% endif %}
             </a>
         </div>
 
         <div class="actions">
-            <button onclick="syncLibrary()" class="btn-action btn-sync">
-                🔄 Sincronizar
-            </button>
+            <button onclick="syncLibrary()" class="btn-action btn-sync">🔄 Sync</button>
             <a href="/explorer" class="btn-action">🚀 Explorar</a>
-            <a href="/" class="btn-action btn-primary">➕ Adicionar</a>
+            <a href="/" class="btn-action btn-primary">➕ Add</a>
         </div>
     </div>
 </div>
 
 <div class="artist-grid">
     {% for artist in artists_list %}
-        <div class="artist-card grad-{{ loop.index0 % 8 }}">
-            
+        <div class="artist-wrapper">
             <a href="/artist/{{ artist.name }}" class="card-link-overlay"></a>
+            
+            <div class="artist-circle grad-{{ loop.index0 % 8 }}">
+                <img src="/artist_image/{{ artist.name }}" class="artist-img" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                
+                <div class="fallback-letter" style="display: none;">
+                    {{ artist.name[0] | upper }}
+                </div>
 
-            {% if artist.visual_status == 'syncing' %}
-                <div class="status-dot status-sync" title="Baixando/Sincronizando"></div>
-            {% elif artist.visual_status == 'error' %}
-                <div class="status-dot status-err" title="Erro no download"></div>
-            {% endif %}
-
-            <form action="/delete_artist" method="POST" class="delete-form" onsubmit="return confirm('Tem certeza que deseja excluir {{ artist.name }}?');">
-                <input type="hidden" name="artist_name" value="{{ artist.name }}">
-                <button type="submit" class="btn-delete-mini" title="Excluir Artista">✕</button>
-            </form>
-
-            <span class="watermark">{{ artist.name[0] | upper }}</span>
+                {% if artist.visual_status == 'syncing' %}
+                    <div class="status-dot status-sync" title="Sincronizando"></div>
+                {% elif artist.visual_status == 'error' %}
+                    <div class="status-dot status-err" title="Erro"></div>
+                {% endif %}
+            </div>
 
             <h3 class="artist-name">{{ artist.name }}</h3>
-            <span class="artist-genre">{{ artist.genre or 'Música' }}</span>
+
+            <form action="/delete_artist" method="POST" class="delete-form" onsubmit="return confirm('Excluir {{ artist.name }}?');">
+                <input type="hidden" name="artist_name" value="{{ artist.name }}">
+                <button type="submit" class="btn-delete-mini" title="Excluir">✕</button>
+            </form>
         </div>
     {% endfor %}
 </div>
 
+{% if total_pages > 1 %}
 <div class="pagination">
     {% if current_page > 1 %}
-        <a href="?page={{ current_page - 1 }}&sort={{ current_sort }}" class="btn-action">⬅ Anterior</a>
+        <a href="?page={{ current_page - 1 }}&sort={{ current_sort }}" class="btn-action">⬅</a>
     {% endif %}
-    
-    <span class="page-info">Página {{ current_page }} de {{ total_pages }}</span>
-    
+    <span class="page-info">{{ current_page }} / {{ total_pages }}</span>
     {% if current_page < total_pages %}
-        <a href="?page={{ current_page + 1 }}&sort={{ current_sort }}" class="btn-action">Próxima ➡</a>
+        <a href="?page={{ current_page + 1 }}&sort={{ current_sort }}" class="btn-action">➡</a>
     {% endif %}
 </div>
+{% endif %}
 
 <script>
 function syncLibrary() {
-    if(!confirm("Isso vai verificar novos lançamentos para TODOS os artistas da sua biblioteca.\n\nO processo roda em segundo plano. Deseja continuar?")) return;
-
+    if(!confirm("Iniciar sincronização de todos os artistas?")) return;
     const btn = document.querySelector('.btn-sync');
-    const originalText = btn.innerText;
-    
-    btn.disabled = true;
-    btn.innerText = "⏳ Iniciando...";
-
+    const txt = btn.innerText;
+    btn.disabled = true; btn.innerText = "⏳";
     fetch('/api/sync_library', { method: 'POST' })
         .then(r => r.json())
-        .then(data => {
-            alert(data.message);
-            btn.innerText = originalText;
-            btn.disabled = false;
-            window.location.reload(); // Recarrega para ver status
-        })
-        .catch(err => {
-            alert("Erro: " + err);
-            btn.innerText = originalText;
-            btn.disabled = false;
-        });
+        .then(d => { alert(d.message); btn.innerText = txt; btn.disabled = false; window.location.reload(); })
+        .catch(e => { alert("Erro: " + e); btn.innerText = txt; btn.disabled = false; });
 }
 </script>
 
