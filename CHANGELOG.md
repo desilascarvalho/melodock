@@ -1,9 +1,12 @@
-## 🚀 v5.2.9
+## 🚀 v5.3.2
 
-Melhorias na detecção de imagens e interface.
+Correções críticas de estabilidade e busca, além do novo sistema de imagens.
 
-### ✨ Novidades
-- **Favicon:** Adicionado ícone de fone de ouvido na aba do navegador.
-- **Imagens Locais:** Se o Melodock não tiver a foto do artista, ele agora procura por `folder.jpg` ou `cover.jpg` na pasta de música do artista.
-- **Changelog Dinâmico:** As notas de atualização agora aparecem automaticamente na tela de configurações.
-- **Interface:** Ajustes finos no CSS da biblioteca.
+### ✨ Melhorias
+- **Imagens via ID:** O sistema agora busca imagens usando o ID único do Deezer, evitando erros com nomes parecidos.
+- **Auto-Repair:** Se a imagem de um artista não existir localmente, ela é baixada automaticamente da API em tempo real ao abrir a biblioteca.
+- **Cache Inteligente:** Força a atualização visual das imagens no navegador quando a versão do sistema muda.
+
+### 🐛 Correções de Bugs
+- **Explorer Search:** Corrigido erro `405 Method Not Allowed` que impedia a busca de novos artistas na aba Explorer.
+- **Queue Manager:** Corrigido erro de sintaxe (crash) ao tentar usar os botões de "Limpar Fila" ou "Limpar Pendentes".

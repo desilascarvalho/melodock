@@ -117,8 +117,6 @@ def background_add(app, aid, aname):
 
         db.execute("REPLACE INTO artists (deezer_id, name, image_url, last_sync) VALUES (?, ?, ?, CURRENT_TIMESTAMP)", 
                    (art_data['id'], art_data['name'], art_data['image']))
-        
-        # Tenta baixar a imagem (se já existir localmente, o DL ignora)
         dl.save_artist_image(art_data['name'], art_data['image'])
         
         albums = meta.get_discography(art_data['id'], target_artist_id=art_data['name'], blacklist=BLACKLIST)
@@ -205,25 +203,49 @@ def search_live():
     if len(q) < 2: return jsonify([])
     return jsonify(get_meta().find_potential_artists(q))
 
-# --- ROTA DE IMAGEM CORRIGIDA (Buscar localmente se não houver cache) ---
-@main_bp.route('/artist_image/<artist_name>')
-def get_image(artist_name):
+# --- ROTA DE IMAGEM POR ID (MAIS PRECISA) ---
+@main_bp.route('/artist_image/<artist_id>')
+def get_image(artist_id):
     dl = get_dl()
-    safe_name = dl.sanitize(artist_name)
+    db = get_db()
     
-    # 1. Tenta imagem baixada pelo Melodock
-    config_path = f"/config/artist_images/{safe_name}.jpg"
-    if os.path.exists(config_path):
-        return send_file(config_path)
+    # Remove sufixos de cache se houver
+    if '?' in artist_id: artist_id = artist_id.split('?')[0]
+
+    # 1. Recupera o NOME do artista usando o ID (para achar o arquivo)
+    artist_row = db.query("SELECT name FROM artists WHERE deezer_id=?", (artist_id,), one=True)
     
-    # 2. Tenta imagens locais na pasta de música
-    # Procura por arquivos de imagem comuns na raiz do artista
-    music_path = os.path.join("/music", safe_name)
-    if os.path.exists(music_path):
-        for img_name in ['folder.jpg', 'cover.jpg', 'artist.jpg', 'poster.jpg', 'fanart.jpg', 'folder.png', 'cover.png']:
-            local_img = os.path.join(music_path, img_name)
-            if os.path.exists(local_img):
-                return send_file(local_img)
+    if artist_row:
+        # Se temos o nome, buscamos no cache local
+        safe_name = dl.sanitize(artist_row['name'])
+        config_path = f"/config/artist_images/{safe_name}.jpg"
+        if os.path.exists(config_path):
+            return send_file(config_path)
+            
+        # Se não achou no cache, busca na pasta de música
+        music_path = os.path.join("/music", safe_name)
+        if os.path.exists(music_path):
+            for img in ['folder.jpg', 'cover.jpg', 'artist.jpg', 'fanart.jpg']:
+                if os.path.exists(os.path.join(music_path, img)):
+                    return send_file(os.path.join(music_path, img))
+
+    # 2. Se falhou tudo (ou não temos o artista no DB ainda), busca na API
+    try:
+        meta = get_meta()
+        # Busca direta por ID (Muito mais preciso)
+        data = meta.get_artist_by_id(artist_id)
+        
+        if data and data.get('image'):
+            # Salva usando o NOME (para manter legibilidade da pasta)
+            dl.save_artist_image(data['name'], data['image'])
+            
+            # Retorna o arquivo recém-salvo
+            safe_name = dl.sanitize(data['name'])
+            config_path = f"/config/artist_images/{safe_name}.jpg"
+            if os.path.exists(config_path):
+                return send_file(config_path)
+    except Exception as e:
+        print(f"Erro imagem ID {artist_id}: {e}")
 
     return "", 404
 
@@ -249,8 +271,27 @@ def delete_artist():
 def logs(): return render_template('logs.html')
 @main_bp.route('/api/logs_data')
 def api_logs(): return jsonify(sys_logger.get_logs())
-@main_bp.route('/explorer')
-def explorer(): return render_template('explorer.html')
+@main_bp.route('/explorer', methods=['GET', 'POST'])
+def explorer():
+    recommendations = []
+    search_term = ""
+    
+    if request.method == 'POST':
+        search_term = request.form.get('artist_name', '').strip()
+        if len(search_term) > 1:
+            # Reutiliza a lógica de busca do Deezer
+            meta = get_meta()
+            # Busca artistas relacionados ou similares (usando a função que já existe)
+            # Nota: O método `find_potential_artists` retorna uma lista limpa
+            recommendations = meta.find_potential_artists(search_term)
+            
+            # Marca quem já está na biblioteca
+            db = get_db()
+            for rec in recommendations:
+                exists = db.query("SELECT 1 FROM artists WHERE deezer_id=?", (rec['id'],), one=True)
+                rec['in_library'] = bool(exists)
+
+    return render_template('explorer.html', recommendations=recommendations, search_term=search_term)
 @main_bp.route('/api/manage_queue', methods=['POST'])
 def manage_queue():
     action = request.form.get('action')
