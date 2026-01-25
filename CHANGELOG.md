@@ -1,12 +1,8 @@
-## 🚀 v5.3.0
+## 🚀 v5.3.1
 
-Melhorias nas recomendações e estabilidade.
+Correção definitiva de metadados para Plex e Jellyfin.
 
 ### ✨ Melhorias
-- **Explorer Inteligente:** A busca na aba Explorer agora retorna artistas *musicalmente similares* ao pesquisado (usando o algoritmo "Fans Also Like" do Deezer), em vez de apenas nomes parecidos.
-- **Imagens via ID:** O sistema agora busca imagens usando o ID único do Deezer, garantindo precisão total.
-- **Auto-Repair:** Se a imagem de um artista não existir localmente, ela é baixada automaticamente da API em tempo real ao abrir a biblioteca.
-
-### 🐛 Correções
-- **Crash Fix:** Corrigido erro de sintaxe no gerenciamento de fila.
-- **Busca Explorer:** Corrigido erro `405` na página de descoberta.
+- **Tagging Rigoroso:** O sistema agora força o salvamento de apenas **um artista** na tag de metadados, impedindo que o Plex separe faixas incorretamente (ex: "Artist A; Artist B").
+- **Feat Handling:** Artistas convidados (Feat.) são movidos obrigatoriamente para o Título da música e removidos da tag Artista.
+- **Limpeza:** A tag oculta `artists` (plural) foi desativada para garantir compatibilidade máxima com media servers.

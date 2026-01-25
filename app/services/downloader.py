@@ -61,17 +61,10 @@ class Downloader:
             if not self._login(): return False
 
             tid = track_meta.get('deezer_id')
-            # O 'title' e 'track_num' aqui são usados apenas para log/display se necessário,
-            # o Deemix vai pegar os dados reais da API.
-            
-            # No entanto, para garantir que o PLEX não fique louco, 
-            # precisamos que o artista principal seja passado corretamente se formos usar templates customizados.
-            # Mas o Deemix lida bem com isso se usarmos a opção featuredToTitle correta.
-
             qual_setting = self.db.get_setting('download_quality') or '3'
             
             # =========================================================
-            # CONFIGURAÇÃO DEEMIX (CORRIGIDA PARA PLEX)
+            # CONFIGURAÇÃO DEEMIX (MODO PLEX RIGOROSO)
             # =========================================================
             settings = {
                 "downloadLocation": target_folder,
@@ -80,8 +73,8 @@ class Downloader:
                 "playlistTracknameTemplate": "%position% - %artist% - %title%",
                 "createPlaylistFolder": True,
                 "playlistNameTemplate": "%playlist%",
-                "createArtistFolder": False, # Melodock gerencia
-                "createAlbumFolder": False,  # Melodock gerencia
+                "createArtistFolder": False, # Melodock gerencia as pastas
+                "createAlbumFolder": False,  # Melodock gerencia as pastas
                 "albumNameTemplate": "%artist% - %album%",
                 "createCDFolder": True,
                 "createStructurePlaylist": False,
@@ -108,28 +101,60 @@ class Downloader:
                 "localArtworkFormat": "jpg",
                 "saveArtwork": True,
                 "coverImageTemplate": "cover",
-                "saveArtworkArtist": True, # Nós salvamos manualmente
+                "saveArtworkArtist": False, 
                 "jpegImageQuality": 100,
                 "dateFormat": "Y-M-D",
                 "albumVariousArtists": True,
                 "removeAlbumVersion": False,
                 "removeDuplicateArtists": True,
                 
-                # --- AQUI ESTÁ O SEGREDO DO PLEX ---
-                # "2" move o feat para o título E remove da tag artist
+                # --- SOLUÇÃO DE METADADOS ---
+                # "2" = Move feat para o título E remove da tag Artist
                 "featuredToTitle": "2", 
                 "titleCasing": "nothing",
                 "artistCasing": "nothing",
-                "executeCommand": "",
+                
+                # Separador visual apenas (caso sobre algo), mas queremos evitar splits
+                "multiArtistSeparator": " & ", 
+                
                 "tags": {
-                    "title": True, "artist": True, "artists": True, "album": True, "cover": True,
-                    "trackNumber": True, "trackTotal": False, "discNumber": True, "discTotal": True,
-                    "albumArtist": True, "genre": True, "year": True, "date": True, "explicit": False,
-                    "isrc": True, "length": True, "barcode": True, "bpm": True, "replayGain": False,
-                    "label": True, "lyrics": False, "syncedLyrics": False, "copyright": False,
-                    "composer": True, "involvedPeople": False, "source": False, "rating": False,
-                    "savePlaylistAsCompilation": False, "useNullSeparator": False, "saveID3v1": True,
-                    "multiArtistSeparator": "default", "singleAlbumArtist": False, "coverDescriptionUTF8": False
+                    "title": True, 
+                    "artist": True, 
+                    "album": True, 
+                    "cover": True,
+                    "trackNumber": True, 
+                    "trackTotal": False, 
+                    "discNumber": True, 
+                    "discTotal": True,
+                    "albumArtist": True, 
+                    "genre": True, 
+                    "year": True, 
+                    "date": True, 
+                    "explicit": False,
+                    "isrc": True, 
+                    "length": True, 
+                    "barcode": True, 
+                    "bpm": True, 
+                    "replayGain": False,
+                    "label": True, 
+                    "lyrics": False, 
+                    "syncedLyrics": False, 
+                    "copyright": False,
+                    "composer": True, 
+                    "involvedPeople": False, 
+                    "source": False, 
+                    "rating": False,
+                    "savePlaylistAsCompilation": False, 
+                    "useNullSeparator": False, 
+                    "saveID3v1": True,
+                    "multiArtistSeparator": "default", 
+                    "singleAlbumArtist": False, 
+                    "coverDescriptionUTF8": False,
+                    
+                    # --- O SEGREDO ESTÁ AQUI ---
+                    # Desativa a tag de lista de artistas (que o Plex usa para separar)
+                    # Força o Plex a ler apenas a tag 'artist' principal
+                    "artists": False 
                 }
             }
 
@@ -145,10 +170,9 @@ class Downloader:
             dmx = DeemixDownloader(self.dz, download_obj, settings, Listener())
             dmx.start()
 
-            # Verificação de arquivo (Timeout 45s para FLAC)
+            # Verificação de arquivo (Timeout 45s)
             for _ in range(45):
                 time.sleep(1)
-                # Verifica se existe algum arquivo de áudio na pasta
                 if os.path.exists(target_folder):
                     files = [f for f in os.listdir(target_folder) if f.endswith(('.mp3', '.flac', '.m4a'))]
                     if files:
