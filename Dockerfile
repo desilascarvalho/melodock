@@ -1,6 +1,5 @@
 FROM python:3.10-slim
 
-# Argumento que receberá a versão do build.sh
 ARG APP_VERSION="v0.0" 
 ENV APP_VERSION=${APP_VERSION}
 
@@ -27,7 +26,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
-# Salva a versão num arquivo para o Python ler (redundância)
 RUN echo "${APP_VERSION}" > /app/version.txt
 
 RUN mkdir -p /config /music /downloads && chmod -R 777 /config /music /downloads

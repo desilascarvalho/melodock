@@ -1,17 +1,15 @@
 services:
   melodock:
-    build: .
-    image: melodock:steroids
+    image: ghcr.io/desilascarvalho/melodock:latest
     container_name: melodock
+    restart: unless-stopped
     ports:
-      - "9014:9014" # Melodock UI
-      - "6595:6595" # Deemix UI (Acesse aqui para logar sua ARL!)
+      - "9014:9014"
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
+      - TZ=America/Sao_Paulo
     volumes:
-      - /storage/data/media/music:/music
-      - /mnt/cache/downloads/melodock:/downloads
-      - /opt/apps/melodock:/config
-    restart: unless-stopped
+      - /path/to/your/music:/music
+      - /path/to/your/downloads:/downloads
+      - /path/to/your/config:/config

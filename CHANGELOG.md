@@ -1,8 +1,8 @@
-## 🚀 v5.3.2
+## 🚀 v5.3.3
 
-Correção rigorosa de tags para Media Servers (Plex/Jellyfin).
+Modo Smart Shuffle para downloads mais seguros e dinâmicos.
 
-### ✨ Melhorias
-- **Anti-Split:** Implementado separador textual (` & `) para artistas múltiplos. Isso impede que o Plex use `;` para quebrar o artista em duas entradas separadas.
-- **Tag Cleaning:** Tags desnecessárias (Compositor, Envolvidos, Lista de Artistas) foram desativadas para manter os metadados limpos.
-- **Single Artist:** Reforço na configuração para manter o artista principal no foco.
+### ✨ Novidades
+- **Smart Shuffle Queue:** O sistema de downloads agora alterna inteligentemente entre artistas. Em vez de baixar uma discografia inteira de uma vez, ele baixa lotes aleatórios (1 a 3 álbuns) de um artista e depois pula para outro.
+- **Turbo-Stealth:** Essa rotação de artistas imita o comportamento humano, dificultando a detecção por parte do Deezer.
+- **Feedback Rápido:** Com o rodízio, novos artistas aparecem na sua biblioteca do Plex/Jellyfin muito mais rápido, sem precisar esperar o artista anterior terminar.

@@ -10,12 +10,10 @@ class SpiderService:
         self.downloader = downloader
 
     def run(self):
-        # Lê configurações direto do DB existente
         enabled = self.db.get_setting('spider_enabled')
         if enabled != 'true':
             return
 
-        # Defaults definidos aqui no código
         try:
             growth_str = self.db.get_setting('spider_growth_percent')
             growth_percent = float(growth_str) if growth_str else 20.0
@@ -26,7 +24,6 @@ class SpiderService:
             growth_percent = 20.0
             min_fans = 5000
 
-        # Conta artistas
         res = self.db.query("SELECT count(*) as c FROM artists", one=True)
         total_artists = res['c']
         
@@ -44,9 +41,7 @@ class SpiderService:
         
         for seed in seeds:
             if added_count >= target_new: break
-            
-            # Pega método que criamos no deezer_data.py
-            # Se der erro aqui, certifique-se que atualizou o deezer_data.py com get_related_artists
+
             try:
                 related = self.metadata.get_related_artists(seed['deezer_id'])
             except:
@@ -65,17 +60,15 @@ class SpiderService:
                 if c_fans < min_fans: continue
                 
                 try:
-                    # 1. Salva Artista
+
                     self.db.execute("INSERT INTO artists (deezer_id, name, genre) VALUES (?, ?, ?)", 
                                    (c_id, c_name, 'Descoberta Automática'))
-                    
-                    # 2. Baixa Imagem
+
                     if c_img:
                         self.downloader.save_artist_image(c_name, c_img)
 
                     sys_logger.log("SPIDER", f"✨ Descoberto: {c_name} ({c_fans} fãs). Buscando álbuns...")
-                    
-                    # 3. Busca Discografia
+
                     albums = self.metadata.get_discography(c_id, target_artist_id=c_name)
                     BLACKLIST = ["playback", "backing track", "karaoke", "instrumental"]
                     alb_count = 0

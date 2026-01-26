@@ -15,17 +15,14 @@ class LibraryScanner:
         if not os.path.exists(MUSIC_LIB_DIR):
             return {"error": "Diretório /music não encontrado"}
 
-        # Lista apenas diretórios na raiz de /music
         folders = [f for f in os.listdir(MUSIC_LIB_DIR) if os.path.isdir(os.path.join(MUSIC_LIB_DIR, f))]
         folders.sort()
 
         candidates = []
         
         for folder_name in folders:
-            if folder_name.startswith('.'): continue # Ignora ocultos
+            if folder_name.startswith('.'): continue 
 
-            # 1. Busca na API do Deezer usando o nome da pasta
-            # O 'fuzzy_match' do seu deezer_data.py vai ajudar aqui
             sys_logger.log("SCAN", f"Analisando pasta: {folder_name}")
             
             result = self.metadata.search_artist(folder_name)

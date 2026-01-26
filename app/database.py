@@ -18,8 +18,7 @@ class Database:
     def init_db(self):
         with self.get_connection() as conn:
             conn.execute('''CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)''')
-            
-            # ADICIONADO last_sync
+
             conn.execute('''CREATE TABLE IF NOT EXISTS artists (
                 deezer_id TEXT PRIMARY KEY, 
                 name TEXT, 
@@ -32,8 +31,7 @@ class Database:
             conn.execute('''CREATE TABLE IF NOT EXISTS queue (id INTEGER PRIMARY KEY AUTOINCREMENT, deezer_id TEXT, title TEXT, artist TEXT, type TEXT, status TEXT DEFAULT 'pending', error_msg TEXT, cover_url TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
             
             conn.execute('''CREATE TABLE IF NOT EXISTS tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, queue_id INTEGER, deezer_id TEXT, title TEXT, artist TEXT, track_number INTEGER, status TEXT DEFAULT 'pending', manual_url TEXT, duration INTEGER DEFAULT 0, FOREIGN KEY(queue_id) REFERENCES queue(id) ON DELETE CASCADE)''')
-            
-            # Migrações de segurança
+
             try: conn.execute("ALTER TABLE tracks ADD COLUMN deezer_id TEXT")
             except: pass
             try: conn.execute("ALTER TABLE artists ADD COLUMN image_url TEXT")

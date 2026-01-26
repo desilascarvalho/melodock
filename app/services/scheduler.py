@@ -21,8 +21,7 @@ class DailyScheduler(threading.Thread):
         sys_logger.log("SCHEDULER", "⏰ Varredura de lançamentos iniciada...")
         
         artists = self.db.query("SELECT * FROM artists")
-        
-        # --- CARREGA FILTROS DO DB ---
+
         keywords_str = self.db.get_setting('ignored_keywords') or "playback,karaoke,instrumental,backing track"
         BLACKLIST = [k.strip() for k in keywords_str.split(',')]
         max_tracks_val = int(self.db.get_setting('max_tracks') or 40)
@@ -37,8 +36,7 @@ class DailyScheduler(threading.Thread):
                 
                 for item in discography:
                     title_lower = item['title'].lower()
-                    
-                    # Aplica filtros
+
                     if any(bad in title_lower for bad in BLACKLIST): continue
                     if item.get('nb_tracks', 0) > max_tracks_val: continue
 

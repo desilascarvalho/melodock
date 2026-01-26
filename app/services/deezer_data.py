@@ -36,16 +36,14 @@ class DeezerDataClient:
             }
         return None
 
-    # --- NOVA FUNÇÃO: RECOMENDAÇÕES REAIS ---
+
     def get_related_artists(self, name):
         """Busca artistas musicalmente similares (Fans also like)"""
-        # 1. Acha o ID do artista pesquisado
         search = self._get("/search/artist", params={'q': name, 'limit': 1})
         if not search.get('data'): return []
         
         source_id = search['data'][0]['id']
         
-        # 2. Busca os relacionados a este ID
         related = self._get(f"/artist/{source_id}/related", params={'limit': 12})
         
         results = []
@@ -53,7 +51,7 @@ class DeezerDataClient:
             results.append({
                 'id': str(item['id']),
                 'name': item['name'],
-                'genre': f"{item.get('nb_fan', 0)} fãs", # Deezer não retorna gênero aqui, usamos popularidade
+                'genre': f"{item.get('nb_fan', 0)} fãs",
                 'image': item.get('picture_medium', '')
             })
         return results
@@ -71,7 +69,6 @@ class DeezerDataClient:
             })
         return results
 
-    # --- LÓGICA DE FILTRAGEM ---
     def get_discography(self, artist_id, target_artist_id=None, blacklist=None):
         albums = []
         next_url = f"/artist/{artist_id}/albums?limit=100"
