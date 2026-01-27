@@ -1,8 +1,11 @@
-## 🚀 v5.3.3
+## 🚀 v5.3.4
 
-Modo Smart Shuffle para downloads mais seguros e dinâmicos.
+Atualização Spider: Expansão automática da biblioteca.
 
 ### ✨ Novidades
-- **Smart Shuffle Queue:** O sistema de downloads agora alterna inteligentemente entre artistas. Em vez de baixar uma discografia inteira de uma vez, ele baixa lotes aleatórios (1 a 3 álbuns) de um artista e depois pula para outro.
-- **Turbo-Stealth:** Essa rotação de artistas imita o comportamento humano, dificultando a detecção por parte do Deezer.
-- **Feedback Rápido:** Com o rodízio, novos artistas aparecem na sua biblioteca do Plex/Jellyfin muito mais rápido, sem precisar esperar o artista anterior terminar.
+- **Spider (Auto-Discovery):** O sistema agora pode expandir sua biblioteca automaticamente! Baseado nos artistas que você já tem, ele busca artistas similares e os adiciona à fila.
+- **Painel de Controle:** Nova aba "Spider" nas configurações para ativar/desativar, definir porcentagem de crescimento diário e filtros de popularidade.
+- **Integração de Regras:** O Spider respeita todas as regras de download (feat no título, ignorar karaokê, limite de faixas) configuradas no sistema.
+
+### 🛡️ Melhorias
+- **Robustez:** Refinamento na lógica de banco de dados e download para suportar o fluxo contínuo de novos artistas vindos do Spider.

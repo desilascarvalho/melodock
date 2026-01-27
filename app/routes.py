@@ -93,16 +93,32 @@ def downloads():
 def settings():
     db = get_db()
     if request.method == 'POST':
-        if request.form.get('deezer_arl'):
-            db.set_setting('deezer_arl', request.form.get('deezer_arl').strip())
-        if request.form.get('download_quality'):
-            db.set_setting('download_quality', request.form.get('download_quality'))
-        if request.form.get('ignored_keywords'):
-            db.set_setting('ignored_keywords', request.form.get('ignored_keywords'))
-        if request.form.get('max_tracks'):
-            db.set_setting('max_tracks', request.form.get('max_tracks'))
-        if request.form.get('scan_time'):
-            db.set_setting('scan_time', request.form.get('scan_time'))
+        form_type = request.form.get('form_type')
+
+        # Salvar Deezer
+        if form_type == 'deezer' or request.form.get('deezer_arl'):
+            if request.form.get('deezer_arl'): 
+                db.set_setting('deezer_arl', request.form.get('deezer_arl').strip())
+            if request.form.get('download_quality'): 
+                db.set_setting('download_quality', request.form.get('download_quality'))
+
+        # Salvar Filtros
+        if form_type == 'filters' or request.form.get('ignored_keywords'):
+            if request.form.get('ignored_keywords'): 
+                db.set_setting('ignored_keywords', request.form.get('ignored_keywords'))
+            if request.form.get('max_tracks'): 
+                db.set_setting('max_tracks', request.form.get('max_tracks'))
+
+        # Salvar Spider (NOVO)
+        if form_type == 'spider':
+            enabled = 'true' if request.form.get('spider_enabled') == 'true' else 'false'
+            db.set_setting('spider_enabled', enabled)
+            
+            if request.form.get('spider_growth'): 
+                db.set_setting('spider_growth_percent', request.form.get('spider_growth'))
+            
+            if request.form.get('spider_min_fans'): 
+                db.set_setting('spider_min_fans', request.form.get('spider_min_fans'))
 
         sys_logger.log("CONFIG", "Configurações Salvas.")
         return redirect('/settings')
@@ -113,7 +129,11 @@ def settings():
         download_quality=db.get_setting('download_quality') or "3",
         ignored_keywords=db.get_setting('ignored_keywords') or "",
         max_tracks=db.get_setting('max_tracks') or "40",
-        scan_time=db.get_setting('scan_time') or "03:00"
+        scan_time=db.get_setting('scan_time') or "03:00",
+        # Vars do Spider
+        spider_enabled=db.get_setting('spider_enabled') or "false",
+        spider_growth=db.get_setting('spider_growth_percent') or "20",
+        spider_min_fans=db.get_setting('spider_min_fans') or "5000"
     )
 
 
