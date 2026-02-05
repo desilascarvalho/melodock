@@ -2,13 +2,15 @@ from flask import Blueprint, render_template, request, redirect, url_for, curren
 from .services.logger import sys_logger
 from collections import defaultdict
 from difflib import SequenceMatcher
+from .services.maintenance import LibraryMaintenance
+from datetime import datetime
 import threading
 import os
 import shutil
 import math
 import time
 import re
-from datetime import datetime
+
 
 main_bp = Blueprint('main', __name__)
 
@@ -453,6 +455,19 @@ def manage_queue():
         sys_logger.log("FILTER", f"Limpeza concluída. {cnt} removidos.")
 
     return jsonify({'success': True})
+    
+@main_bp.route('/api/trigger_maintenance', methods=['POST'])
+def trigger_maintenance():
+    """Botão manual de manutenção"""
+    app = current_app._get_current_object()
+    
+    def run_job(app_obj):
+        with app_obj.app_context():
+            maint = LibraryMaintenance(get_db(), get_meta(), get_dl())
+            maint.run()
+
+    threading.Thread(target=run_job, args=(app,)).start()
+    return jsonify({'success': True, 'message': 'Manutenção iniciada em background.'})
 
 
 def start_queue_worker(app):

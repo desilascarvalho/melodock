@@ -98,6 +98,26 @@
 
         <div class="setting-card">
             <div class="card-header">
+                <div class="icon-box yellow">🛠️</div>
+                <div class="header-text">
+                    <h3>Manutenção</h3>
+                    <p>Integridade da Biblioteca</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <p style="color:#ccc; font-size:0.9rem; margin-bottom:15px;">
+                    Verifica se existem faixas faltando nos álbuns já baixados (comparando com a API) e adiciona apenas as faltantes na fila.
+                </p>
+                <p style="color:#666; font-size:0.8rem; margin-bottom:15px;">Automático todo dia às 04:00.</p>
+                
+                <button onclick="triggerMaintenance()" class="btn-action" style="width:100%;">
+                    🔧 Verificar Integridade Agora
+                </button>
+            </div>
+        </div>
+
+        <div class="setting-card">
+            <div class="card-header">
                 <div class="icon-box green">📚</div>
                 <div class="header-text">
                     <h3>Importar</h3>
@@ -180,6 +200,16 @@ function finalizeImport() {
         method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
     }).then(() => { alert('Importação rodando em background!'); location.href='/logs'; });
 }
+
+function triggerMaintenance() {
+    if(!confirm("Isso vai verificar todos os álbuns da biblioteca. Pode demorar. Continuar?")) return;
+    fetch('/api/trigger_maintenance', { method:'POST' })
+    .then(r => r.json())
+    .then(d => { 
+        alert(d.message); 
+        location.href='/logs'; 
+    });
+}
 </script>
 
 <style>
@@ -196,7 +226,8 @@ function finalizeImport() {
     .purple { background: rgba(187, 134, 252, 0.15); color: #bb86fc; }
     .orange { background: rgba(255, 152, 0, 0.15); color: #ff9800; }
     .green { background: rgba(29, 185, 84, 0.15); color: #1db954; }
-    .red { background: rgba(231, 76, 60, 0.15); color: #e74c3c; } /* NOVO ESTILO */
+    .red { background: rgba(231, 76, 60, 0.15); color: #e74c3c; } 
+    .yellow { background: rgba(241, 196, 15, 0.15); color: #f1c40f; }
 
     .version-display { display: flex; align-items: center; gap: 20px; }
     .v-number { font-size: 1.8rem; font-weight: 800; color: #fff; letter-spacing: -1px; }

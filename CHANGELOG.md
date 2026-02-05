@@ -1,11 +1,7 @@
-## 🚀 v5.3.4
+## 🚀 v5.3.5
 
-Atualização Spider: Expansão automática da biblioteca.
+Ferramentas de Manutenção e Integridade.
 
 ### ✨ Novidades
-- **Spider (Auto-Discovery):** O sistema agora pode expandir sua biblioteca automaticamente! Baseado nos artistas que você já tem, ele busca artistas similares e os adiciona à fila.
-- **Painel de Controle:** Nova aba "Spider" nas configurações para ativar/desativar, definir porcentagem de crescimento diário e filtros de popularidade.
-- **Integração de Regras:** O Spider respeita todas as regras de download (feat no título, ignorar karaokê, limite de faixas) configuradas no sistema.
-
-### 🛡️ Melhorias
-- **Robustez:** Refinamento na lógica de banco de dados e download para suportar o fluxo contínuo de novos artistas vindos do Spider.
+- **Auto-Repair:** Nova função que roda diariamente (04:00) para verificar se seus álbuns estão completos. Se o Deezer adicionar faixas novas (Bonus Tracks) ou se algum download falhou silenciosamente no passado, o Melodock detecta e baixa apenas o que falta.
+- **Botão de Manutenção:** Agora você pode forçar essa verificação manualmente através do painel de Configurações.

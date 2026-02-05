@@ -4,6 +4,7 @@ import datetime
 import os
 from .logger import sys_logger
 from .spider import SpiderService 
+from .maintenance import LibraryMaintenance
 
 MUSIC_LIB_DIR = "/music"
 
@@ -16,6 +17,7 @@ class DailyScheduler(threading.Thread):
         self.daemon = True
         self.last_scan_run = None
         self.last_spider_run = None
+        self.last_maint_run = None
 
     def check_new_releases(self):
         sys_logger.log("SCHEDULER", "⏰ Varredura de lançamentos iniciada...")
@@ -94,6 +96,13 @@ class DailyScheduler(threading.Thread):
         except Exception as e:
             sys_logger.log("ERROR", f"Falha no Spider: {e}")
 
+    def run_maintenance(self):
+        try:
+            maint = LibraryMaintenance(self.db, self.metadata, self.downloader)
+            maint.run()
+        except Exception as e:
+            sys_logger.log("ERROR", f"Falha na Manutenção: {e}")
+
     def run(self):
         sys_logger.log("SCHEDULER", "🕒 Serviço de Agendamento Iniciado.")
         
@@ -107,6 +116,10 @@ class DailyScheduler(threading.Thread):
                 if current_hm == scan_time and self.last_scan_run != today:
                     self.check_new_releases()
                     self.last_scan_run = today
+
+                if current_hm == "04:00" and self.last_maint_run != today:
+                    self.run_maintenance()
+                    self.last_maint_run = today
 
                 spider_time = self.db.get_setting('spider_schedule_time') or '12:00'
                 if current_hm == spider_time and self.last_spider_run != today:
