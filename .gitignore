@@ -42,3 +42,4 @@ alembic/versions/__pycache__/
 
 # Claude
 .claude/
+app/static_old/
