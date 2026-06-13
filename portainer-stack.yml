@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  melodock:
+    image: melodock:latest
+    container_name: melodock
+    restart: unless-stopped
+    ports:
+      - "9014:9014"
+    volumes:
+      - /mnt/storage/data/media/music:/music
+      - /mnt/storage/data/media/downloads:/downloads
+      - /opt/grathus/config:/config
+      - /home/silas/.config/rclone/rclone.conf:/root/.config/rclone/rclone.conf
+    environment:
+      - TZ=America/Sao_Paulo
+      # Sobrescreva abaixo ou use "Env variables" no Portainer:
+      # - DEEZER_ARL=seu_arl_aqui
+      # - DOWNLOAD_QUALITY=MP3_320
+      # - RCLONE_ENABLED=true
+      # - RCLONE_REMOTE=google:media/music
+      # - ACCESS_PASSWORD=
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9014/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

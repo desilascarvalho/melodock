@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project runtime / secrets
+*.zip
+*.db
+*.sqlite
+*.log
+/config/
+.env
+.env.*
+
+# Docker
+.dockerignore
+
+# Alembic (keep migrations, ignore local state)
+alembic/versions/__pycache__/
+
+# Claude
+.claude/

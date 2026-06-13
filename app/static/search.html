@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscar · Melodock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: '#0D0D0F',
+            surface: { DEFAULT: '#161618', 2: '#1E1E21' },
+            accent: { DEFAULT: '#7C3AED', hover: '#6D28D9', light: '#A855F7' },
+            txt: { DEFAULT: '#F5F5F7', sec: '#8E8E93', muted: '#48484A' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          borderRadius: { card: '12px', el: '8px' },
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body data-page="search" class="bg-base text-txt font-sans antialiased min-h-screen">
+  <div id="sidebar-root"></div>
+
+  <main class="lg:pl-60 min-h-screen" data-screen-label="Buscar">
+    <div class="px-6 lg:px-10 py-8 pt-20 lg:pt-8 max-w-[1100px] mx-auto">
+
+      <div class="max-w-2xl mx-auto pt-6 lg:pt-12 text-center">
+        <h1 class="text-2xl font-bold tracking-tight">Buscar artista no Deezer</h1>
+        <p class="text-txt-sec text-sm mt-1">Encontre artistas e adicione à sua biblioteca</p>
+        <div class="relative mt-6">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-txt-sec pointer-events-none" data-icon="search"></span>
+          <input id="search-input" type="text" autocomplete="off" spellcheck="false"
+            placeholder="Nome do artista…"
+            class="w-full bg-surface border border-white/10 rounded-el pl-12 pr-4 py-4 text-lg placeholder-txt-muted focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/25 transition-colors">
+        </div>
+      </div>
+
+      <div id="search-state" class="text-center text-txt-muted text-sm mt-14">Digite ao menos 2 caracteres para buscar</div>
+      <div id="results" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 mt-10 pb-10"></div>
+
+    </div>
+  </main>
+
+  <!-- Modal: adicionar artista -->
+  <div id="add-modal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+    <div id="modal-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-surface-2 border border-white/10 rounded-card w-full max-w-md p-6 shadow-2xl shadow-black/60">
+      <div class="flex items-center gap-4">
+        <div id="modal-photo"></div>
+        <div class="min-w-0">
+          <div id="modal-name" class="font-bold text-lg truncate">—</div>
+          <div id="modal-meta" class="text-sm text-txt-sec mt-0.5">—</div>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <div class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-2.5">Tipos de release</div>
+        <div id="modal-types" class="grid grid-cols-2 gap-2">
+          <label class="flex items-center gap-2.5 bg-surface rounded-el px-3 py-2.5 border border-white/5 cursor-pointer hover:border-white/15 transition-colors">
+            <input type="checkbox" value="album" checked class="accent-[#7C3AED] w-4 h-4"><span class="text-sm">Album</span>
+          </label>
+          <label class="flex items-center gap-2.5 bg-surface rounded-el px-3 py-2.5 border border-white/5 cursor-pointer hover:border-white/15 transition-colors">
+            <input type="checkbox" value="ep" checked class="accent-[#7C3AED] w-4 h-4"><span class="text-sm">EP</span>
+          </label>
+          <label class="flex items-center gap-2.5 bg-surface rounded-el px-3 py-2.5 border border-white/5 cursor-pointer hover:border-white/15 transition-colors">
+            <input type="checkbox" value="single" class="accent-[#7C3AED] w-4 h-4"><span class="text-sm">Single</span>
+          </label>
+          <label class="flex items-center gap-2.5 bg-surface rounded-el px-3 py-2.5 border border-white/5 cursor-pointer hover:border-white/15 transition-colors">
+            <input type="checkbox" value="live" class="accent-[#7C3AED] w-4 h-4"><span class="text-sm">Live</span>
+          </label>
+        </div>
+      </div>
+
+      <label class="flex items-center justify-between mt-4 bg-surface rounded-el px-3 py-2.5 border border-white/5 cursor-pointer">
+        <span class="text-sm">Baixar automaticamente</span>
+        <input type="checkbox" id="modal-auto" checked class="switch">
+      </label>
+
+      <p id="modal-error" class="hidden text-sm text-red-400 mt-3"></p>
+
+      <div class="flex justify-end gap-2.5 mt-6">
+        <button id="modal-cancel" class="btn-secondary">Cancelar</button>
+        <button id="modal-confirm" class="btn-primary">Adicionar à biblioteca</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=2"></script>
+  <script src="js/app.js?v=2"></script>
+  <script src="js/search.js?v=2"></script>
+</body>
+</html>

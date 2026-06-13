@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · Melodock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: '#0D0D0F',
+            surface: { DEFAULT: '#161618', 2: '#1E1E21' },
+            accent: { DEFAULT: '#7C3AED', hover: '#6D28D9', light: '#A855F7' },
+            txt: { DEFAULT: '#F5F5F7', sec: '#8E8E93', muted: '#48484A' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          borderRadius: { card: '12px', el: '8px' },
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body data-page="dashboard" class="bg-base text-txt font-sans antialiased min-h-screen">
+  <div id="sidebar-root"></div>
+
+  <main class="lg:pl-60 min-h-screen" data-screen-label="Dashboard">
+    <div class="px-6 lg:px-10 py-8 pt-20 lg:pt-8 max-w-[1200px] mx-auto">
+
+      <header class="mb-8">
+        <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <p class="text-txt-sec text-sm mt-1">Visão geral da sua biblioteca</p>
+      </header>
+
+      <!-- Stats -->
+      <section aria-label="Estatísticas" class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="bg-surface rounded-card border border-white/5 p-5">
+          <div class="w-9 h-9 rounded-el bg-accent/10 text-accent-light flex items-center justify-center"><span class="w-[18px] h-[18px]" data-icon="artists"></span></div>
+          <div class="mt-4 text-3xl font-bold tabular-nums" id="stat-artists">—</div>
+          <div class="text-xs text-txt-sec mt-1">Artistas</div>
+        </div>
+        <div class="bg-surface rounded-card border border-white/5 p-5">
+          <div class="w-9 h-9 rounded-el bg-accent/10 text-accent-light flex items-center justify-center"><span class="w-[18px] h-[18px]" data-icon="disc"></span></div>
+          <div class="mt-4 text-3xl font-bold tabular-nums" id="stat-albums">—</div>
+          <div class="text-xs text-txt-sec mt-1">Álbuns</div>
+        </div>
+        <div class="bg-surface rounded-card border border-white/5 p-5">
+          <div class="w-9 h-9 rounded-el bg-accent/10 text-accent-light flex items-center justify-center"><span class="w-[18px] h-[18px]" data-icon="note"></span></div>
+          <div class="mt-4 text-3xl font-bold tabular-nums" id="stat-tracks">—</div>
+          <div class="text-xs text-txt-sec mt-1">Tracks</div>
+        </div>
+        <div class="bg-surface rounded-card border border-white/5 p-5">
+          <div class="w-9 h-9 rounded-el bg-accent/10 text-accent-light flex items-center justify-center"><span class="w-[18px] h-[18px]" data-icon="storage"></span></div>
+          <div class="mt-4 text-3xl font-bold tabular-nums" id="stat-size">—</div>
+          <div class="text-xs text-txt-sec mt-1">Em disco</div>
+        </div>
+      </section>
+
+      <!-- Álbuns recentes -->
+      <section class="mt-10">
+        <div class="flex items-baseline justify-between mb-4">
+          <h2 class="text-lg font-semibold">Álbuns recentes</h2>
+          <a href="downloads.html" class="text-sm text-accent-light hover:text-white transition-colors">Ver downloads →</a>
+        </div>
+        <div id="album-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4"></div>
+      </section>
+
+      <!-- Jobs recentes -->
+      <section class="mt-10 pb-10">
+        <h2 class="text-lg font-semibold mb-4">Jobs recentes</h2>
+        <div id="job-list" class="bg-surface rounded-card border border-white/5 divide-y divide-white/5"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="js/api.js?v=2"></script>
+  <script src="js/app.js?v=2"></script>
+  <script src="js/dashboard.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings · Melodock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: '#0D0D0F',
+            surface: { DEFAULT: '#161618', 2: '#1E1E21' },
+            accent: { DEFAULT: '#7C3AED', hover: '#6D28D9', light: '#A855F7' },
+            txt: { DEFAULT: '#F5F5F7', sec: '#8E8E93', muted: '#48484A' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          borderRadius: { card: '12px', el: '8px' },
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="settings" class="bg-base text-txt font-sans antialiased min-h-screen">
+  <div id="sidebar-root"></div>
+
+  <main class="lg:pl-60 min-h-screen" data-screen-label="Settings">
+    <div class="px-6 lg:px-10 py-8 pt-20 lg:pt-8 max-w-2xl mx-auto lg:mx-0 lg:ml-10">
+
+      <header class="mb-10">
+        <h1 class="text-2xl font-bold tracking-tight">Settings</h1>
+        <p class="text-txt-sec text-sm mt-1">Configurações do servidor e da conta Deezer</p>
+      </header>
+
+      <!-- Deezer -->
+      <section>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Deezer</h2>
+        <div class="flex flex-col gap-5">
+          <div>
+            <label for="arl" class="block text-sm font-medium mb-1.5">ARL</label>
+            <div class="flex gap-2">
+              <input type="password" id="arl" autocomplete="off" class="input flex-1 font-mono text-[13px]" placeholder="Cookie ARL da sua conta Deezer">
+              <button id="test-arl" class="btn-secondary">Testar ARL</button>
+            </div>
+            <p id="arl-feedback" class="hidden text-xs mt-2 font-medium"></p>
+          </div>
+          <div>
+            <label for="quality" class="block text-sm font-medium mb-1.5">Qualidade</label>
+            <select id="quality" class="input w-full">
+              <option value="FLAC">FLAC</option>
+              <option value="MP3_320">MP3 320kbps</option>
+              <option value="MP3_128">MP3 128kbps</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <hr class="border-white/5 my-9">
+
+      <!-- Filtros -->
+      <section>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Filtros</h2>
+        <div class="flex flex-col gap-6">
+          <div>
+            <span class="block text-sm font-medium mb-2.5">Tipos de release</span>
+            <div id="release-types" class="flex flex-wrap gap-2">
+              <label class="cursor-pointer"><input type="checkbox" value="album" class="sr-only peer"><span class="inline-block px-3.5 py-1.5 rounded-full text-sm border border-white/10 text-txt-sec peer-checked:bg-accent/15 peer-checked:text-accent-light peer-checked:border-accent/40 transition-colors">Album</span></label>
+              <label class="cursor-pointer"><input type="checkbox" value="ep" class="sr-only peer"><span class="inline-block px-3.5 py-1.5 rounded-full text-sm border border-white/10 text-txt-sec peer-checked:bg-accent/15 peer-checked:text-accent-light peer-checked:border-accent/40 transition-colors">EP</span></label>
+              <label class="cursor-pointer"><input type="checkbox" value="single" class="sr-only peer"><span class="inline-block px-3.5 py-1.5 rounded-full text-sm border border-white/10 text-txt-sec peer-checked:bg-accent/15 peer-checked:text-accent-light peer-checked:border-accent/40 transition-colors">Single</span></label>
+              <label class="cursor-pointer"><input type="checkbox" value="live" class="sr-only peer"><span class="inline-block px-3.5 py-1.5 rounded-full text-sm border border-white/10 text-txt-sec peer-checked:bg-accent/15 peer-checked:text-accent-light peer-checked:border-accent/40 transition-colors">Live</span></label>
+              <label class="cursor-pointer"><input type="checkbox" value="compilation" class="sr-only peer"><span class="inline-block px-3.5 py-1.5 rounded-full text-sm border border-white/10 text-txt-sec peer-checked:bg-accent/15 peer-checked:text-accent-light peer-checked:border-accent/40 transition-colors">Compilação</span></label>
+            </div>
+          </div>
+          <div>
+            <label for="blocklist-input" class="block text-sm font-medium mb-1.5">Blocklist</label>
+            <div class="flex gap-2">
+              <input type="text" id="blocklist-input" class="input flex-1" placeholder="Palavra a bloquear (ex.: remix)">
+              <button id="blocklist-add" class="btn-secondary">Adicionar</button>
+            </div>
+            <div id="blocklist-tags" class="flex flex-wrap gap-2 mt-3"></div>
+          </div>
+          <div>
+            <label for="max-tracks" class="block text-sm font-medium mb-1.5">Máximo de faixas por release</label>
+            <input type="number" id="max-tracks" min="0" step="1" class="input w-32">
+            <p class="text-xs text-txt-muted mt-1.5">0 = sem limite</p>
+          </div>
+        </div>
+      </section>
+
+      <hr class="border-white/5 my-9">
+
+      <!-- Anti-Ban -->
+      <section>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Anti-Ban</h2>
+        <div class="grid sm:grid-cols-2 gap-6">
+          <div>
+            <label for="delay-min" class="flex items-baseline justify-between text-sm font-medium mb-2">Delay mínimo <span id="delay-min-val" class="font-mono text-[13px] text-accent-light">—</span></label>
+            <input type="range" id="delay-min" min="0" max="30" step="0.5" class="w-full accent-[#7C3AED]">
+          </div>
+          <div>
+            <label for="delay-max" class="flex items-baseline justify-between text-sm font-medium mb-2">Delay máximo <span id="delay-max-val" class="font-mono text-[13px] text-accent-light">—</span></label>
+            <input type="range" id="delay-max" min="0" max="30" step="0.5" class="w-full accent-[#7C3AED]">
+          </div>
+        </div>
+        <p class="text-xs text-txt-muted mt-3">Pausa aleatória entre tracks para evitar bloqueio da conta.</p>
+      </section>
+
+      <hr class="border-white/5 my-9">
+
+      <!-- Acesso -->
+      <section>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Acesso</h2>
+        <div>
+          <label for="access-password" class="block text-sm font-medium mb-1.5">Senha</label>
+          <input type="password" id="access-password" autocomplete="new-password" class="input w-full sm:max-w-sm" placeholder="Opcional — protege a interface web">
+        </div>
+      </section>
+
+      <hr class="border-white/5 my-9">
+
+      <!-- rclone / Google Drive -->
+      <section>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Google Drive (rclone)</h2>
+        <div class="flex flex-col gap-5">
+          <label class="flex items-center justify-between bg-surface rounded-el px-3 py-2.5 border border-white/5 cursor-pointer">
+            <div>
+              <span class="text-sm font-medium">Upload automático para Drive</span>
+              <p class="text-xs text-txt-muted mt-0.5">Após cada download, envia para o remote configurado e apaga localmente.</p>
+            </div>
+            <input type="checkbox" id="rclone-enabled" class="switch">
+          </label>
+          <div>
+            <label for="rclone-remote" class="block text-sm font-medium mb-1.5">Remote de destino</label>
+            <input type="text" id="rclone-remote" class="input w-full font-mono text-[13px]" placeholder="google:media/music">
+          </div>
+          <div>
+            <label for="rclone-flags" class="block text-sm font-medium mb-1.5">Flags extras do rclone</label>
+            <input type="text" id="rclone-flags" class="input w-full font-mono text-[13px]" placeholder="--transfers=4 --checkers=8 --drive-chunk-size=128M">
+            <p class="text-xs text-txt-muted mt-1.5">Requer <code class="font-mono bg-white/5 px-1 rounded">rclone.conf</code> montado em <code class="font-mono bg-white/5 px-1 rounded">/root/.config/rclone/rclone.conf</code></p>
+          </div>
+        </div>
+      </section>
+
+      <hr class="border-white/5 my-9">
+
+      <!-- Ações -->
+      <section class="pb-14">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Ações</h2>
+        <div class="flex flex-wrap gap-3">
+          <button id="save-settings" class="btn-primary">Salvar configurações</button>
+          <button id="scan-library" class="btn-secondary">Scan da biblioteca</button>
+          <button id="run-audit" class="btn-secondary">Executar auditoria</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>

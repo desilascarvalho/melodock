@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  melodock:
+    build: .
+    image: melodock:latest
+    container_name: melodock
+    restart: unless-stopped
+    ports:
+      - "9014:9014"
+    volumes:
+      - /mnt/storage/data/media/music:/music
+      - /mnt/storage/data/media/downloads:/downloads
+      - /opt/grathus/config:/config
+    environment:
+      - TZ=America/Sao_Paulo
+    networks:
+      - media
+
+networks:
+  media:
+    external: true

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artistas · Melodock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: '#0D0D0F',
+            surface: { DEFAULT: '#161618', 2: '#1E1E21' },
+            accent: { DEFAULT: '#7C3AED', hover: '#6D28D9', light: '#A855F7' },
+            txt: { DEFAULT: '#F5F5F7', sec: '#8E8E93', muted: '#48484A' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          borderRadius: { card: '12px', el: '8px' },
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body data-page="artists-list" class="bg-base text-txt font-sans antialiased min-h-screen">
+  <div id="sidebar-root"></div>
+
+  <main class="lg:pl-60 min-h-screen">
+    <div class="px-6 lg:px-10 py-8 pt-20 lg:pt-8 max-w-[1100px] mx-auto">
+
+      <header class="mb-8 flex items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Artistas</h1>
+          <p class="text-txt-sec text-sm mt-1">Sua biblioteca</p>
+        </div>
+        <input id="search-input" type="search" placeholder="Filtrar…"
+          class="w-48 bg-surface-2 border border-white/10 rounded-el px-3 py-2 text-sm placeholder-txt-muted focus:outline-none focus:border-accent/50 transition-colors">
+      </header>
+
+      <div id="artists-loading" class="text-txt-sec text-sm py-8 text-center">Carregando…</div>
+      <div id="artists-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+
+      <div id="pagination" class="flex justify-center gap-2 mt-8 hidden">
+        <button id="btn-prev" class="px-4 py-2 rounded-el border border-white/10 text-sm text-txt-sec hover:text-white disabled:opacity-30 transition-colors">← Anterior</button>
+        <span id="page-info" class="px-4 py-2 text-sm text-txt-sec"></span>
+        <button id="btn-next" class="px-4 py-2 rounded-el border border-white/10 text-sm text-txt-sec hover:text-white disabled:opacity-30 transition-colors">Próximo →</button>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/api.js?v=2"></script>
+  <script src="js/app.js?v=2"></script>
+  <script>
+    let alPage = 1;
+    const PAGE_SIZE = 20;
+
+    function alCard(a) {
+      return (
+        '<a href="artist.html?id=' + a.id + '" class="bg-surface rounded-card border border-white/5 p-5 flex flex-col items-center text-center hover:border-accent/30 transition-colors group">' +
+          MD.img('/api/artists/' + a.id + '/picture', a.name, 'w-20 h-20 text-lg mb-3', 'rounded-full') +
+          '<div class="font-semibold text-sm leading-tight group-hover:text-accent-light transition-colors">' + MD.esc(a.name) + '</div>' +
+          '<div class="text-xs text-txt-sec mt-1">' + (a.album_count || 0) + ' álbuns</div>' +
+        '</a>'
+      );
+    }
+
+    async function alLoad(page, search) {
+      document.getElementById('artists-loading').classList.remove('hidden');
+      document.getElementById('artists-grid').innerHTML = '';
+      const url = '/artists?page=' + page + '&limit=' + PAGE_SIZE + (search ? '&search=' + encodeURIComponent(search) : '');
+      const data = await apiFetch(url);
+      document.getElementById('artists-loading').classList.add('hidden');
+      const items = (data && data.items) || [];
+      if (!items.length) {
+        document.getElementById('artists-loading').textContent = 'Nenhum artista encontrado.';
+        document.getElementById('artists-loading').classList.remove('hidden');
+        document.getElementById('pagination').classList.add('hidden');
+        return;
+      }
+      document.getElementById('artists-grid').innerHTML = items.map(alCard).join('');
+      const pages = data.pages || 1;
+      const pg = document.getElementById('pagination');
+      if (pages > 1) {
+        pg.classList.remove('hidden');
+        document.getElementById('page-info').textContent = 'Página ' + page + ' de ' + pages;
+        document.getElementById('btn-prev').disabled = page <= 1;
+        document.getElementById('btn-next').disabled = page >= pages;
+        alPage = page;
+      } else {
+        pg.classList.add('hidden');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      alLoad(1, '');
+      let debTimer;
+      document.getElementById('search-input').addEventListener('input', (e) => {
+        clearTimeout(debTimer);
+        debTimer = setTimeout(() => { alPage = 1; alLoad(1, e.target.value.trim()); }, 350);
+      });
+      document.getElementById('btn-prev').addEventListener('click', () => {
+        if (alPage > 1) alLoad(alPage - 1, document.getElementById('search-input').value.trim());
+      });
+      document.getElementById('btn-next').addEventListener('click', () => {
+        alLoad(alPage + 1, document.getElementById('search-input').value.trim());
+      });
+    });
+  </script>
+</body>
+</html>

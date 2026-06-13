@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Downloads · Melodock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: '#0D0D0F',
+            surface: { DEFAULT: '#161618', 2: '#1E1E21' },
+            accent: { DEFAULT: '#7C3AED', hover: '#6D28D9', light: '#A855F7' },
+            txt: { DEFAULT: '#F5F5F7', sec: '#8E8E93', muted: '#48484A' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          borderRadius: { card: '12px', el: '8px' },
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="downloads" class="bg-base text-txt font-sans antialiased min-h-screen">
+  <div id="sidebar-root"></div>
+
+  <main class="lg:pl-60 min-h-screen" data-screen-label="Downloads">
+    <div class="px-6 lg:px-10 py-8 pt-20 lg:pt-8 max-w-[900px] mx-auto">
+
+      <header class="mb-8">
+        <h1 class="text-2xl font-bold tracking-tight">Downloads</h1>
+        <p class="text-txt-sec text-sm mt-1">Fila de downloads e job em andamento</p>
+      </header>
+
+      <!-- Job atual -->
+      <section>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-3">Job atual</h2>
+        <div id="active-card"></div>
+      </section>
+
+      <!-- Fila -->
+      <section class="mt-10 pb-10">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec">Na fila <span id="queue-count" class="font-mono normal-case"></span></h2>
+          <button id="clear-completed" class="text-sm text-txt-sec hover:text-white transition-colors">Limpar concluídos</button>
+        </div>
+        <div id="queue-list" class="bg-surface rounded-card border border-white/5 divide-y divide-white/5"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/downloads.js"></script>
+</body>
+</html>

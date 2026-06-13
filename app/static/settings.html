@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings · Melodock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: '#0D0D0F',
+            surface: { DEFAULT: '#161618', 2: '#1E1E21' },
+            accent: { DEFAULT: '#7C3AED', hover: '#6D28D9', light: '#A855F7' },
+            txt: { DEFAULT: '#F5F5F7', sec: '#8E8E93', muted: '#48484A' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          borderRadius: { card: '12px', el: '8px' },
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body data-page="settings" class="bg-base text-txt font-sans antialiased min-h-screen">
+  <div id="sidebar-root"></div>
+
+  <main class="lg:pl-60 min-h-screen" data-screen-label="Settings">
+    <div class="px-6 lg:px-10 py-8 pt-20 lg:pt-8 max-w-2xl mx-auto lg:mx-0 lg:ml-10">
+
+      <header class="mb-10">
+        <h1 class="text-2xl font-bold tracking-tight">Settings</h1>
+        <p class="text-txt-sec text-sm mt-1">Configurações do servidor e da conta Deezer</p>
+      </header>
+
+      <!-- Deezer -->
+      <section>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Deezer</h2>
+        <div class="flex flex-col gap-5">
+          <div>
+            <label for="arl" class="block text-sm font-medium mb-1.5">ARL</label>
+            <div class="flex gap-2">
+              <input type="password" id="arl" autocomplete="off" class="input flex-1 font-mono text-[13px]" placeholder="Cookie ARL da sua conta Deezer">
+              <button id="test-arl" class="btn-secondary">Testar ARL</button>
+            </div>
+            <p id="arl-feedback" class="hidden text-xs mt-2 font-medium"></p>
+          </div>
+          <div>
+            <label for="quality" class="block text-sm font-medium mb-1.5">Qualidade</label>
+            <select id="quality" class="input w-full">
+              <option value="FLAC">FLAC</option>
+              <option value="MP3_320">MP3 320kbps</option>
+              <option value="MP3_128">MP3 128kbps</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <hr class="border-white/5 my-9">
+
+      <!-- Filtros -->
+      <section>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Filtros</h2>
+        <div class="flex flex-col gap-6">
+          <div>
+            <span class="block text-sm font-medium mb-2.5">Tipos de release</span>
+            <div id="release-types" class="flex flex-wrap gap-2">
+              <label class="cursor-pointer"><input type="checkbox" value="album" class="sr-only peer"><span class="inline-block px-3.5 py-1.5 rounded-full text-sm border border-white/10 text-txt-sec peer-checked:bg-accent/15 peer-checked:text-accent-light peer-checked:border-accent/40 transition-colors">Album</span></label>
+              <label class="cursor-pointer"><input type="checkbox" value="ep" class="sr-only peer"><span class="inline-block px-3.5 py-1.5 rounded-full text-sm border border-white/10 text-txt-sec peer-checked:bg-accent/15 peer-checked:text-accent-light peer-checked:border-accent/40 transition-colors">EP</span></label>
+              <label class="cursor-pointer"><input type="checkbox" value="single" class="sr-only peer"><span class="inline-block px-3.5 py-1.5 rounded-full text-sm border border-white/10 text-txt-sec peer-checked:bg-accent/15 peer-checked:text-accent-light peer-checked:border-accent/40 transition-colors">Single</span></label>
+              <label class="cursor-pointer"><input type="checkbox" value="live" class="sr-only peer"><span class="inline-block px-3.5 py-1.5 rounded-full text-sm border border-white/10 text-txt-sec peer-checked:bg-accent/15 peer-checked:text-accent-light peer-checked:border-accent/40 transition-colors">Live</span></label>
+              <label class="cursor-pointer"><input type="checkbox" value="compilation" class="sr-only peer"><span class="inline-block px-3.5 py-1.5 rounded-full text-sm border border-white/10 text-txt-sec peer-checked:bg-accent/15 peer-checked:text-accent-light peer-checked:border-accent/40 transition-colors">Compilação</span></label>
+            </div>
+          </div>
+          <div>
+            <label for="blocklist-input" class="block text-sm font-medium mb-1.5">Blocklist</label>
+            <div class="flex gap-2">
+              <input type="text" id="blocklist-input" class="input flex-1" placeholder="Palavra a bloquear (ex.: remix)">
+              <button id="blocklist-add" class="btn-secondary">Adicionar</button>
+            </div>
+            <div id="blocklist-tags" class="flex flex-wrap gap-2 mt-3"></div>
+          </div>
+          <div>
+            <label for="max-tracks" class="block text-sm font-medium mb-1.5">Máximo de faixas por release</label>
+            <input type="number" id="max-tracks" min="0" step="1" class="input w-32">
+            <p class="text-xs text-txt-muted mt-1.5">0 = sem limite</p>
+          </div>
+        </div>
+      </section>
+
+      <hr class="border-white/5 my-9">
+
+      <!-- Anti-Ban -->
+      <section>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Anti-Ban</h2>
+        <div class="grid sm:grid-cols-2 gap-6">
+          <div>
+            <label for="delay-min" class="flex items-baseline justify-between text-sm font-medium mb-2">Delay mínimo <span id="delay-min-val" class="font-mono text-[13px] text-accent-light">—</span></label>
+            <input type="range" id="delay-min" min="0" max="30" step="0.5" class="w-full accent-[#7C3AED]">
+          </div>
+          <div>
+            <label for="delay-max" class="flex items-baseline justify-between text-sm font-medium mb-2">Delay máximo <span id="delay-max-val" class="font-mono text-[13px] text-accent-light">—</span></label>
+            <input type="range" id="delay-max" min="0" max="30" step="0.5" class="w-full accent-[#7C3AED]">
+          </div>
+        </div>
+        <p class="text-xs text-txt-muted mt-3">Pausa aleatória entre tracks para evitar bloqueio da conta.</p>
+      </section>
+
+      <hr class="border-white/5 my-9">
+
+      <!-- Acesso -->
+      <section>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Acesso</h2>
+        <div>
+          <label for="access-password" class="block text-sm font-medium mb-1.5">Senha</label>
+          <input type="password" id="access-password" autocomplete="new-password" class="input w-full sm:max-w-sm" placeholder="Opcional — protege a interface web">
+        </div>
+      </section>
+
+      <hr class="border-white/5 my-9">
+
+      <!-- Deemix -->
+      <section>
+        <div class="flex items-baseline justify-between mb-5">
+          <div>
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec">Deemix</h2>
+            <p class="text-xs text-txt-muted mt-1">config.json do deemix — controla pastas, templates e tags</p>
+          </div>
+          <button id="save-deemix" class="btn-primary text-sm py-1.5 px-4">Salvar</button>
+        </div>
+
+        <!-- Pastas -->
+        <div class="mb-6">
+          <h3 class="text-[11px] font-semibold uppercase tracking-wider text-txt-muted mb-4">Estrutura de pastas</h3>
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <div><div class="text-sm font-medium">Criar pasta do artista</div><div class="text-xs text-txt-muted mt-0.5">ex.: /music/Artista/</div></div>
+              <label class="dz-toggle"><input type="checkbox" id="dz-createArtistFolder"><span class="dz-slider"></span></label>
+            </div>
+            <div class="flex items-center justify-between">
+              <div><div class="text-sm font-medium">Criar pasta do álbum</div><div class="text-xs text-txt-muted mt-0.5">ex.: /music/Artista/Álbum/</div></div>
+              <label class="dz-toggle"><input type="checkbox" id="dz-createAlbumFolder"><span class="dz-slider"></span></label>
+            </div>
+            <div class="flex items-center justify-between">
+              <div><div class="text-sm font-medium">Criar pasta de CD</div><div class="text-xs text-txt-muted mt-0.5">Para álbuns com múltiplos discos</div></div>
+              <label class="dz-toggle"><input type="checkbox" id="dz-createCDFolder"><span class="dz-slider"></span></label>
+            </div>
+            <div class="flex items-center justify-between">
+              <div><div class="text-sm font-medium">Pasta única para singles</div><div class="text-xs text-txt-muted mt-0.5">Agrupa todos os singles numa pasta</div></div>
+              <label class="dz-toggle"><input type="checkbox" id="dz-createSingleFolder"><span class="dz-slider"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Templates -->
+        <div class="mb-6">
+          <h3 class="text-[11px] font-semibold uppercase tracking-wider text-txt-muted mb-4">Templates de nome</h3>
+          <div class="flex flex-col gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Nome da pasta do artista</label>
+              <input type="text" id="dz-artistNameTemplate" class="input w-full font-mono text-[13px]">
+              <p class="text-xs text-txt-muted mt-1">Variáveis: %artist%</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Nome da pasta do álbum</label>
+              <input type="text" id="dz-albumNameTemplate" class="input w-full font-mono text-[13px]">
+              <p class="text-xs text-txt-muted mt-1">Variáveis: %artist% %album% %year% %type%</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Nome do arquivo (álbum)</label>
+              <input type="text" id="dz-albumTracknameTemplate" class="input w-full font-mono text-[13px]">
+              <p class="text-xs text-txt-muted mt-1">Variáveis: %tracknumber% %title% %artist% %album% %year%</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Nome do arquivo (avulso)</label>
+              <input type="text" id="dz-tracknameTemplate" class="input w-full font-mono text-[13px]">
+              <p class="text-xs text-txt-muted mt-1">Variáveis: %artist% %title% %isrc%</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Artwork -->
+        <div class="mb-6">
+          <h3 class="text-[11px] font-semibold uppercase tracking-wider text-txt-muted mb-4">Artwork</h3>
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <div><div class="text-sm font-medium">Salvar capa do álbum</div><div class="text-xs text-txt-muted mt-0.5">Grava um arquivo de imagem na pasta</div></div>
+              <label class="dz-toggle"><input type="checkbox" id="dz-saveArtwork"><span class="dz-slider"></span></label>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Tamanho da capa embutida (px)</label>
+              <input type="number" id="dz-embeddedArtworkSize" min="100" max="1800" step="100" class="input w-32">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Tamanho da capa local (px)</label>
+              <input type="number" id="dz-localArtworkSize" min="100" max="1800" step="100" class="input w-32">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Nome do arquivo de capa</label>
+              <input type="text" id="dz-coverImageTemplate" class="input w-48 font-mono text-[13px]">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="mb-6">
+          <h3 class="text-[11px] font-semibold uppercase tracking-wider text-txt-muted mb-4">Tags a gravar</h3>
+          <div id="dz-tags" class="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4"></div>
+        </div>
+
+        <!-- Outros -->
+        <div>
+          <h3 class="text-[11px] font-semibold uppercase tracking-wider text-txt-muted mb-4">Outros</h3>
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <div><div class="text-sm font-medium">Letras sincronizadas</div><div class="text-xs text-txt-muted mt-0.5">Grava arquivo .lrc</div></div>
+              <label class="dz-toggle"><input type="checkbox" id="dz-syncedLyrics"><span class="dz-slider"></span></label>
+            </div>
+            <div class="flex items-center justify-between">
+              <div><div class="text-sm font-medium">Criar playlist M3U8</div></div>
+              <label class="dz-toggle"><input type="checkbox" id="dz-createM3U8File"><span class="dz-slider"></span></label>
+            </div>
+            <div class="flex items-center justify-between">
+              <div><div class="text-sm font-medium">Sobrescrever arquivo existente</div></div>
+              <label class="dz-toggle"><input type="checkbox" id="dz-overwriteFile"><span class="dz-slider"></span></label>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Caractere substituto (ilegal)</label>
+              <input type="text" id="dz-illegalCharacterReplacer" maxlength="1" class="input w-16 font-mono text-center text-[13px]">
+              <p class="text-xs text-txt-muted mt-1">Substituído em nomes de arquivo inválidos</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="border-white/5 my-9">
+
+      <!-- Ações -->
+      <section class="pb-14">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-txt-sec mb-5">Ações</h2>
+        <div class="flex flex-wrap gap-3">
+          <button id="save-settings" class="btn-primary">Salvar configurações</button>
+          <button id="scan-library" class="btn-secondary">Scan da biblioteca</button>
+          <button id="run-audit" class="btn-secondary">Executar auditoria</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="js/api.js?v=2"></script>
+  <script src="js/app.js?v=2"></script>
+  <script src="js/settings.js?v=2"></script>
+</body>
+</html>
